@@ -1,0 +1,9 @@
+apiVersion: core.oxia.io/v1
+kind: TCMetadataNotification
+metadata:
+  labels:
+    app.kubernetes.io/name: manager
+    app.kubernetes.io/managed-by: kustomize
+  name: tcmetadatanotification-sample
+spec:
+  # TODO(user): Add fields here
