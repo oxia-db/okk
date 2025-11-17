@@ -19,6 +19,7 @@ package v1
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -39,16 +40,18 @@ type OxiaNamespace struct {
 }
 
 type OxiaClusterCoordinator struct {
-	Namespaces []OxiaNamespace `json:"namespaces,omitempty"`
+	Namespaces []OxiaNamespace             `json:"namespaces,omitempty"`
+	Resource   corev1.ResourceRequirements `json:"resource,omitempty"`
 }
 
-type OxiaClusterNode struct {
-	Replicas int32 `json:"replicas,omitempty"`
+type OxiaClusterDataServer struct {
+	Replicas int32                       `json:"replicas,omitempty"`
+	Resource corev1.ResourceRequirements `json:"resource,omitempty"`
 }
 type OxiaClusterSpec struct {
 	Image                  *string                `json:"image,omitempty"`
 	OxiaClusterCoordinator OxiaClusterCoordinator `json:"coordinator,omitempty"`
-	OxiaClusterNode        OxiaClusterNode        `json:"node,omitempty"`
+	OxiaClusterDataServer  OxiaClusterDataServer  `json:"dataServer,omitempty"`
 }
 
 type OxiaClusterStatus struct {
@@ -71,8 +74,8 @@ func (cluster *OxiaCluster) GetCoordinatorName() string {
 	return fmt.Sprintf("coordinator-%s", cluster.Name)
 }
 
-func (cluster *OxiaCluster) GetNodeName() string {
-	return fmt.Sprintf("node-%s", cluster.Name)
+func (cluster *OxiaCluster) GetDataServerName() string {
+	return fmt.Sprintf("data-server-%s", cluster.Name)
 }
 
 func (cluster *OxiaCluster) GetImage() string {

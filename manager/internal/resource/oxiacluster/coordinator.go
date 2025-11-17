@@ -156,13 +156,13 @@ func applyCoordinatorConfigmap(ctx context.Context, client client.Client, cluste
 		cm["namespaces"] = string(bData)
 
 		// parse nodes
-		nodeSpec := cluster.Spec.OxiaClusterNode
+		nodeSpec := cluster.Spec.OxiaClusterDataServer
 		replicas := nodeSpec.Replicas
 		nodes := make([]map[string]string, replicas)
 		for idx := range nodes {
 			nodes[idx] = map[string]string{
-				"public":   fmt.Sprintf("%s-%d.%s.headless.svc.cluster.local:%d", cluster.GetNodeName(), idx, cluster.Namespace, PublicPort.Port),
-				"internal": fmt.Sprintf("%s-%d.headless:%d", cluster.GetNodeName(), idx, InternalPort.Port),
+				"public":   fmt.Sprintf("%s-%d.%s.headless.svc.cluster.local:%d", cluster.GetDataServerName(), idx, cluster.Namespace, PublicPort.Port),
+				"internal": fmt.Sprintf("%s-%d.headless:%d", cluster.GetDataServerName(), idx, InternalPort.Port),
 			}
 		}
 		bData, err = yaml.Marshal(nodes)
@@ -196,6 +196,7 @@ func applyCoordinatorDeployment(ctx context.Context, client client.Client, clust
 	}
 	if _, err := controllerutil.CreateOrPatch(ctx, client, deployment, func() error {
 		injectLabelsAndOwnership(&deployment.ObjectMeta, cluster, ComponentCoordinator)
+		coordinatorSpec := cluster.Spec.OxiaClusterCoordinator
 		deployment.Spec = v4.DeploymentSpec{
 			Strategy: v4.DeploymentStrategy{
 				Type: v4.RecreateDeploymentStrategyType,
@@ -227,7 +228,8 @@ func applyCoordinatorDeployment(ctx context.Context, client client.Client, clust
 								fmt.Sprintf("--k8s-namespace=%s", cluster.Namespace),
 								fmt.Sprintf("--k8s-configmap-name=%s", fmt.Sprintf("%s-status", coordinatorName)),
 							},
-							Image: cluster.GetImage(),
+							Resources: coordinatorSpec.Resource,
+							Image:     cluster.GetImage(),
 							Ports: []v2.ContainerPort{
 								{
 									Name:          InternalPort.Name,

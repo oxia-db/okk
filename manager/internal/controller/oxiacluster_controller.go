@@ -67,7 +67,7 @@ func (r *OxiaClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	if err := oxiacluster.ApplyNode(ctx, r.Client, cluster); err != nil {
+	if err := oxiacluster.ApplyDataServer(ctx, r.Client, cluster); err != nil {
 		log.Error(err, "Failed to apply node resource")
 		return ctrl.Result{}, err
 	}

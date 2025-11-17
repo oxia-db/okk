@@ -14,21 +14,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func ApplyNode(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
-	if err := applyNodeService(ctx, client, cluster); err != nil {
+func ApplyDataServer(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	if err := applyDataServerService(ctx, client, cluster); err != nil {
 		return err
 	}
-	if err := applyNodeHeadlessService(ctx, client, cluster); err != nil {
+	if err := applyDataServerHeadlessService(ctx, client, cluster); err != nil {
 		return err
 	}
-	if err := applyNodeStatefulSet(ctx, client, cluster); err != nil {
+	if err := applyDataServerStatefulSet(ctx, client, cluster); err != nil {
 		return err
 	}
 	return nil
 }
 
-func applyNodeService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
-	nodeName := cluster.GetNodeName()
+func applyDataServerService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	nodeName := cluster.GetDataServerName()
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nodeName,
@@ -51,8 +51,8 @@ func applyNodeService(ctx context.Context, client client.Client, cluster *v1.Oxi
 	return nil
 }
 
-func applyNodeHeadlessService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
-	nodeName := cluster.GetNodeName()
+func applyDataServerHeadlessService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	nodeName := cluster.GetDataServerName()
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-headless", nodeName),
@@ -78,25 +78,25 @@ func applyNodeHeadlessService(ctx context.Context, client client.Client, cluster
 	return nil
 }
 
-func applyNodeStatefulSet(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
-	nodeName := cluster.GetNodeName()
-	nodeSpec := cluster.Spec.OxiaClusterNode
+func applyDataServerStatefulSet(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	dataServerName := cluster.GetDataServerName()
+	dataServerSpec := cluster.Spec.OxiaClusterDataServer
 	sts := appv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      nodeName,
+			Name:      dataServerName,
 			Namespace: cluster.Namespace,
 		},
 	}
 	if _, err := controllerutil.CreateOrPatch(ctx, client, &sts, func() error {
 		injectLabelsAndOwnership(&sts.ObjectMeta, cluster, ComponentNode)
 		sts.Spec = appv1.StatefulSetSpec{
-			Replicas:            pointer.Int32(nodeSpec.Replicas),
+			Replicas:            pointer.Int32(dataServerSpec.Replicas),
 			PodManagementPolicy: appv1.ParallelPodManagement,
 			Selector:            &metav1.LabelSelector{MatchLabels: SelectLabels(ComponentNode, cluster.Name)},
-			ServiceName:         fmt.Sprintf("%s-headless", nodeName),
+			ServiceName:         fmt.Sprintf("%s-headless", dataServerName),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      nodeName,
+					Name:      dataServerName,
 					Namespace: cluster.Namespace,
 					Labels:    Labels(ComponentNode, cluster.Name),
 					OwnerReferences: []metav1.OwnerReference{
@@ -114,7 +114,8 @@ func applyNodeStatefulSet(ctx context.Context, client client.Client, cluster *v1
 							"--data-dir=/data/db",
 							"--wal-dir=/data/wal",
 						},
-						Image: cluster.GetImage(),
+						Resources: dataServerSpec.Resource,
+						Image:     cluster.GetImage(),
 						Ports: []corev1.ContainerPort{
 							{
 								Name:          PublicPort.Name,
