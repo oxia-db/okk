@@ -1,0 +1,51 @@
+message Operation {
+  optional Assertion assertion = 1;
+  oneof operation  {
+    OperationPut put = 2;
+    OperationDelete delete = 3;
+    OperationGet get = 4;
+    OperationList list = 5;
+    OperationScan scan = 6;
+  }
+}
+
+message Assertion {
+
+}
+
+message OperationPut {
+
+}
+
+message OperationGet {
+
+}
+
+message OperationList {
+
+}
+
+message OperationScan {
+
+}
+message OperationDelete {
+
+}
+
+
+message ExecuteCommand {
+
+}
+
+enum Status {
+  Ok = 1;
+  AssertionFailure = 2;
+}
+
+message ExecuteResponse {
+
+}
+
+service Okk {
+  rpc Execute(stream ExecuteCommand) returns (stream ExecuteResponse);
+}
