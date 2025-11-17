@@ -17,25 +17,42 @@ limitations under the License.
 package v1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// OxiaClusterSpec defines the desired state of OxiaCluster.
-type OxiaClusterSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of OxiaCluster. Edit oxiacluster_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type AntiAffinity struct {
+	Labels []string `json:"labels,omitempty" `
+	Mode   string   `json:"mode,omitempty" `
 }
 
-// OxiaClusterStatus defines the observed state of OxiaCluster.
+type OxiaNamespacePolicies struct {
+	AntiAffinities []AntiAffinity `json:"antiAffinities,omitempty"`
+}
+type OxiaNamespace struct {
+	Name                 string                 `json:"name,omitempty"`
+	InitialShardCount    uint32                 `json:"initialShardCount,omitempty" `
+	ReplicationFactor    uint32                 `json:"replicationFactor,omitempty"`
+	NotificationsEnabled bool                   `json:"notificationsEnabled,omitempty" `
+	Policies             *OxiaNamespacePolicies `json:"policies,omitempty" `
+}
+
+type OxiaClusterCoordinator struct {
+	Namespaces []OxiaNamespace `json:"namespaces,omitempty"`
+}
+
+type OxiaClusterNode struct {
+	Replicas int32 `json:"replicas,omitempty"`
+}
+type OxiaClusterSpec struct {
+	Image                  *string                `json:"image,omitempty"`
+	OxiaClusterCoordinator OxiaClusterCoordinator `json:"coordinator,omitempty"`
+	OxiaClusterNode        OxiaClusterNode        `json:"node,omitempty"`
+}
+
 type OxiaClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions []metav1.Condition `json:"conditions"`
 }
 
 // +kubebuilder:object:root=true
@@ -48,6 +65,21 @@ type OxiaCluster struct {
 
 	Spec   OxiaClusterSpec   `json:"spec,omitempty"`
 	Status OxiaClusterStatus `json:"status,omitempty"`
+}
+
+func (cluster *OxiaCluster) GetCoordinatorName() string {
+	return fmt.Sprintf("coordinator-%s", cluster.Name)
+}
+
+func (cluster *OxiaCluster) GetNodeName() string {
+	return fmt.Sprintf("node-%s", cluster.Name)
+}
+
+func (cluster *OxiaCluster) GetImage() string {
+	if cluster.Spec.Image == nil {
+		return "oxia/oxia:latest"
+	}
+	return *cluster.Spec.Image
 }
 
 // +kubebuilder:object:root=true

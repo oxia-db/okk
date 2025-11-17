@@ -19,6 +19,8 @@ package controller
 import (
 	"context"
 
+	"github.com/oxia-io/okk/internal/resource/oxiacluster"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,23 +35,42 @@ type OxiaClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=core.oxia.io,resources=oxiaclusters,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core.oxia.io,resources=oxiaclusters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core.oxia.io,resources=oxiaclusters/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core.oxia.io,resources=tcbasickvs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core.oxia.io,resources=tcbasickvs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core.oxia.io,resources=tcbasickvs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get
+// +kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=statefulsets/status,verbs=get
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the OxiaCluster object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
 func (r *OxiaClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	cluster := &corev1.OxiaCluster{}
+	if err := r.Get(ctx, req.NamespacedName, cluster); err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	if cluster.DeletionTimestamp != nil {
+		return ctrl.Result{}, nil
+	}
+
+	if err := oxiacluster.ApplyCoordinator(ctx, r.Client, cluster); err != nil {
+		log.Error(err, "Failed to apply coordinator resource")
+		return ctrl.Result{}, err
+	}
+
+	if err := oxiacluster.ApplyNode(ctx, r.Client, cluster); err != nil {
+		log.Error(err, "Failed to apply node resource")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

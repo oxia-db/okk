@@ -1,1 +1,190 @@
 package oxiacluster
+
+import (
+	"context"
+	"fmt"
+
+	v1 "github.com/oxia-io/okk/api/v1"
+	appv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+)
+
+func ApplyNode(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	if err := applyNodeService(ctx, client, cluster); err != nil {
+		return err
+	}
+	if err := applyNodeHeadlessService(ctx, client, cluster); err != nil {
+		return err
+	}
+	if err := applyNodeStatefulSet(ctx, client, cluster); err != nil {
+		return err
+	}
+	return nil
+}
+
+func applyNodeService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	nodeName := cluster.GetNodeName()
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nodeName,
+			Namespace: cluster.Namespace,
+		},
+	}
+	if _, err := controllerutil.CreateOrPatch(ctx, client, service, func() error {
+		injectLabelsAndOwnership(&service.ObjectMeta, cluster, ComponentNode)
+		service.Spec = corev1.ServiceSpec{
+			Selector: SelectLabels(ComponentNode, cluster.Name),
+			Ports: []corev1.ServicePort{
+				InternalPort,
+				MetricsPort,
+			},
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func applyNodeHeadlessService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	nodeName := cluster.GetNodeName()
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-headless", nodeName),
+			Namespace: cluster.Namespace,
+		},
+	}
+	if _, err := controllerutil.CreateOrPatch(ctx, client, service, func() error {
+		injectLabelsAndOwnership(&service.ObjectMeta, cluster, ComponentNode)
+		service.Spec = corev1.ServiceSpec{
+			ClusterIP:                "None",
+			PublishNotReadyAddresses: true,
+			Selector:                 SelectLabels(ComponentNode, cluster.Name),
+			Ports: []corev1.ServicePort{
+				PublicPort,
+				InternalPort,
+				MetricsPort,
+			},
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func applyNodeStatefulSet(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
+	nodeName := cluster.GetNodeName()
+	nodeSpec := cluster.Spec.OxiaClusterNode
+	sts := appv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nodeName,
+			Namespace: cluster.Namespace,
+		},
+	}
+	if _, err := controllerutil.CreateOrPatch(ctx, client, &sts, func() error {
+		injectLabelsAndOwnership(&sts.ObjectMeta, cluster, ComponentNode)
+		sts.Spec = appv1.StatefulSetSpec{
+			Replicas:            pointer.Int32(nodeSpec.Replicas),
+			PodManagementPolicy: appv1.ParallelPodManagement,
+			Selector:            &metav1.LabelSelector{MatchLabels: SelectLabels(ComponentNode, cluster.Name)},
+			ServiceName:         fmt.Sprintf("%s-headless", nodeName),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      nodeName,
+					Namespace: cluster.Namespace,
+					Labels:    Labels(ComponentNode, cluster.Name),
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(cluster, cluster.GetObjectKind().GroupVersionKind()),
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name: "server",
+						Command: []string{
+							"oxia",
+							"server",
+							"--profile",
+							"--log-json",
+							"--data-dir=/data/db",
+							"--wal-dir=/data/wal",
+						},
+						Image: cluster.GetImage(),
+						Ports: []corev1.ContainerPort{
+							{
+								Name:          PublicPort.Name,
+								ContainerPort: PublicPort.Port,
+							},
+							{
+								Name:          InternalPort.Name,
+								ContainerPort: InternalPort.Port,
+							},
+							{
+								Name:          MetricsPort.Name,
+								ContainerPort: MetricsPort.Port,
+							},
+						},
+						VolumeMounts: []corev1.VolumeMount{{Name: "data", MountPath: "/data"}},
+						LivenessProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								Exec: &corev1.ExecAction{
+									Command: []string{"oxia", "health", fmt.Sprintf("--port=%d", InternalPort.Port)},
+								},
+							},
+							InitialDelaySeconds: 10,
+							TimeoutSeconds:      10,
+						},
+						ReadinessProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								Exec: &corev1.ExecAction{
+									Command: []string{"oxia", "health", fmt.Sprintf("--port=%d", InternalPort.Port), "--service=oxia-readiness"},
+								},
+							},
+							InitialDelaySeconds: 10,
+							TimeoutSeconds:      10,
+						},
+						StartupProbe: &corev1.Probe{
+							ProbeHandler: corev1.ProbeHandler{
+								Exec: &corev1.ExecAction{
+									Command: []string{"oxia", "health", fmt.Sprintf("--port=%d", InternalPort.Port)},
+								},
+							},
+							InitialDelaySeconds: 60,
+							TimeoutSeconds:      10,
+						},
+					}},
+				},
+			},
+			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "data",
+						Labels: SelectLabels(ComponentNode, cluster.Name),
+					},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						AccessModes: []corev1.PersistentVolumeAccessMode{
+							corev1.ReadWriteOnce,
+						},
+						Resources: corev1.VolumeResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceStorage: resource.MustParse("10Gi"),
+							},
+						},
+						Selector: &metav1.LabelSelector{
+							MatchLabels: SelectLabels(ComponentNode, cluster.Name),
+						},
+					},
+				},
+			},
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
