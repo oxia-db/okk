@@ -149,30 +149,23 @@ func applyCoordinatorConfigmap(ctx context.Context, client client.Client, cluste
 
 		// parse namespaces
 		cm := make(map[string]any)
-		bData, err := yaml.Marshal(cluster.Spec.OxiaClusterCoordinator.Namespaces)
-		if err != nil {
-			return err
-		}
-		cm["namespaces"] = string(bData)
+		cm["namespaces"] = cluster.Spec.OxiaClusterCoordinator.Namespaces
 
 		// parse nodes
 		nodeSpec := cluster.Spec.OxiaClusterDataServer
 		replicas := nodeSpec.Replicas
 		nodes := make([]map[string]string, replicas)
+		dataServerName := cluster.GetDataServerName()
 		for idx := range nodes {
 			nodes[idx] = map[string]string{
-				"public":   fmt.Sprintf("%s-%d.%s.headless.svc.cluster.local:%d", cluster.GetDataServerName(), idx, cluster.Namespace, PublicPort.Port),
-				"internal": fmt.Sprintf("%s-%d.headless:%d", cluster.GetDataServerName(), idx, InternalPort.Port),
+				"public":   fmt.Sprintf("%s-%d.%s-headless.%s.svc.cluster.local:%d", dataServerName, idx, dataServerName, cluster.Namespace, PublicPort.Port),
+				"internal": fmt.Sprintf("%s-%d.%s-headless:%d", dataServerName, idx, dataServerName, InternalPort.Port),
 			}
 		}
-		bData, err = yaml.Marshal(nodes)
-		if err != nil {
-			return err
-		}
-		cm["servers"] = string(bData)
+		cm["servers"] = nodes
 
 		// parse configmap
-		bData, err = yaml.Marshal(cm)
+		bData, err := yaml.Marshal(cm)
 		if err != nil {
 			return err
 		}
@@ -228,6 +221,10 @@ func applyCoordinatorDeployment(ctx context.Context, client client.Client, clust
 								fmt.Sprintf("--k8s-namespace=%s", cluster.Namespace),
 								fmt.Sprintf("--k8s-configmap-name=%s", fmt.Sprintf("%s-status", coordinatorName)),
 							},
+							VolumeMounts: []v2.VolumeMount{{
+								Name:      "conf",
+								MountPath: "/oxia/conf",
+							}},
 							Resources: coordinatorSpec.Resource,
 							Image:     cluster.GetImage(),
 							Ports: []v2.ContainerPort{

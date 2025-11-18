@@ -48,6 +48,14 @@ type OxiaClusterDataServer struct {
 	Replicas int32                       `json:"replicas,omitempty"`
 	Resource corev1.ResourceRequirements `json:"resource,omitempty"`
 }
+
+func (o *OxiaClusterDataServer) GetReplicas() int32 {
+	if o == nil {
+		return 3
+	}
+	return o.Replicas
+}
+
 type OxiaClusterSpec struct {
 	Image                  *string                `json:"image,omitempty"`
 	OxiaClusterCoordinator OxiaClusterCoordinator `json:"coordinator,omitempty"`

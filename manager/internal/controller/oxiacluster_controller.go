@@ -20,6 +20,9 @@ import (
 	"context"
 
 	"github.com/oxia-io/okk/internal/resource/oxiacluster"
+	k8sv1 "k8s.io/api/apps/v1"
+	k8scorev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,9 +38,9 @@ type OxiaClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=core.oxia.io,resources=tcbasickvs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core.oxia.io,resources=tcbasickvs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core.oxia.io,resources=tcbasickvs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core.oxia.io,resources=oxiaclusters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core.oxia.io,resources=oxiaclusters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core.oxia.io,resources=oxiaclusters/finalizers,verbs=update
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
@@ -79,6 +82,13 @@ func (r *OxiaClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 func (r *OxiaClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.OxiaCluster{}).
+		Owns(&k8scorev1.Service{}).
+		Owns(&k8scorev1.ServiceAccount{}).
+		Owns(&k8scorev1.ConfigMap{}).
+		Owns(&rbacv1.Role{}).
+		Owns(&rbacv1.RoleBinding{}).
+		Owns(&k8sv1.Deployment{}).
+		Owns(&k8sv1.StatefulSet{}).
 		Named("oxiacluster").
 		Complete(r)
 }

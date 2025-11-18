@@ -28,10 +28,10 @@ func ApplyDataServer(ctx context.Context, client client.Client, cluster *v1.Oxia
 }
 
 func applyDataServerService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
-	nodeName := cluster.GetDataServerName()
+	dataServerName := cluster.GetDataServerName()
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      nodeName,
+			Name:      dataServerName,
 			Namespace: cluster.Namespace,
 		},
 	}
@@ -40,6 +40,7 @@ func applyDataServerService(ctx context.Context, client client.Client, cluster *
 		service.Spec = corev1.ServiceSpec{
 			Selector: SelectLabels(ComponentNode, cluster.Name),
 			Ports: []corev1.ServicePort{
+				PublicPort,
 				InternalPort,
 				MetricsPort,
 			},
@@ -52,10 +53,10 @@ func applyDataServerService(ctx context.Context, client client.Client, cluster *
 }
 
 func applyDataServerHeadlessService(ctx context.Context, client client.Client, cluster *v1.OxiaCluster) error {
-	nodeName := cluster.GetDataServerName()
+	dataServerName := cluster.GetDataServerName()
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-headless", nodeName),
+			Name:      fmt.Sprintf("%s-headless", dataServerName),
 			Namespace: cluster.Namespace,
 		},
 	}
@@ -90,7 +91,7 @@ func applyDataServerStatefulSet(ctx context.Context, client client.Client, clust
 	if _, err := controllerutil.CreateOrPatch(ctx, client, &sts, func() error {
 		injectLabelsAndOwnership(&sts.ObjectMeta, cluster, ComponentNode)
 		sts.Spec = appv1.StatefulSetSpec{
-			Replicas:            pointer.Int32(dataServerSpec.Replicas),
+			Replicas:            pointer.Int32(dataServerSpec.GetReplicas()),
 			PodManagementPolicy: appv1.ParallelPodManagement,
 			Selector:            &metav1.LabelSelector{MatchLabels: SelectLabels(ComponentNode, cluster.Name)},
 			ServiceName:         fmt.Sprintf("%s-headless", dataServerName),
@@ -165,7 +166,7 @@ func applyDataServerStatefulSet(ctx context.Context, client client.Client, clust
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:   "data",
-						Labels: SelectLabels(ComponentNode, cluster.Name),
+						Labels: Labels(ComponentNode, cluster.Name),
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
 						AccessModes: []corev1.PersistentVolumeAccessMode{
@@ -175,9 +176,6 @@ func applyDataServerStatefulSet(ctx context.Context, client client.Client, clust
 							Requests: corev1.ResourceList{
 								corev1.ResourceStorage: resource.MustParse("10Gi"),
 							},
-						},
-						Selector: &metav1.LabelSelector{
-							MatchLabels: SelectLabels(ComponentNode, cluster.Name),
 						},
 					},
 				},
