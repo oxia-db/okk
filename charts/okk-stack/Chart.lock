@@ -1,0 +1,12 @@
+dependencies:
+- name: okk-manager
+  repository: file://../okk-manager
+  version: 0.1.0
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 58.2.0
+- name: chaos-mesh
+  repository: https://charts.chaos-mesh.org
+  version: 2.7.2
+digest: sha256:90cb90dd4d8980a6fe5393690df87b4be57120cfd9679f853426cb09589f97b8
+generated: "2025-11-19T00:38:54.770018+08:00"

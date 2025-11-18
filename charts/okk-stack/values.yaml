@@ -1,0 +1,16 @@
+global:
+  namespace: okk-system
+
+okk-manager:
+  image: "mattison/okk-manager:0.1.0"
+  replicas: 1
+
+monitoring:
+  namespace: "{{ .Values.global.namespace }}"
+  grafana:
+    adminPassword: "admin"
+
+chaos:
+  namespace: "{{ .Values.global.namespace }}"
+  dashboard:
+    securityMode: false
