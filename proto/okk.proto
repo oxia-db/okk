@@ -1,3 +1,11 @@
+syntax = "proto3";
+
+
+package io.oxia.okk.proto.v1;
+
+option go_package = "github.com/oxia-db/okk/proto";
+option java_multiple_files = true;
+
 message Operation {
   optional Assertion assertion = 1;
   oneof operation  {
@@ -14,7 +22,8 @@ message Assertion {
 }
 
 message OperationPut {
-
+  string key = 1;
+  bytes value = 2;
 }
 
 message OperationGet {
@@ -28,6 +37,7 @@ message OperationList {
 message OperationScan {
 
 }
+
 message OperationDelete {
 
 }
@@ -38,8 +48,8 @@ message ExecuteCommand {
 }
 
 enum Status {
-  Ok = 1;
-  AssertionFailure = 2;
+  Ok = 0;
+  AssertionFailure = 1;
 }
 
 message ExecuteResponse {
