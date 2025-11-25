@@ -19,18 +19,24 @@ package controller
 import (
 	"context"
 
+	"github.com/oxia-io/okk/internal/resource/worker"
+	"github.com/oxia-io/okk/internal/task"
+	"github.com/oxia-io/okk/internal/task/generator"
+	appv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	corev1 "github.com/oxia-io/okk/api/v1"
+	v1 "github.com/oxia-io/okk/api/v1"
 )
 
 // TCMetadataEphemeralReconciler reconciles a TCMetadataEphemeral object
 type TCMetadataEphemeralReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme      *runtime.Scheme
+	TaskManager *task.Manager
 }
 
 // +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals,verbs=get;list;watch;create;update;patch;delete
@@ -38,17 +44,30 @@ type TCMetadataEphemeralReconciler struct {
 // +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals/finalizers,verbs=update
 
 func (r *TCMetadataEphemeralReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
-
+	tc := &v1.TCMetadataEphemeral{}
+	if err := r.Client.Get(ctx, req.NamespacedName, tc); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	wc := &tc.Spec.Worker
+	if err := worker.ApplyWorker(ctx, r.Client, tc, wc); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err := r.TaskManager.ApplyTask(tc.Name, wc.TargetCluster.GetServiceURL(), func() generator.Generator {
+		return generator.NewMetadataEphemeralGenerator(&log, ctx, tc.Name, tc.Spec.Duration)
+	}); err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *TCMetadataEphemeralReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.TCMetadataEphemeral{}).
+		For(&v1.TCMetadataEphemeral{}).
+		For(&corev1.Service{}).
+		For(&appv1.Deployment{}).
 		Named("tcmetadataephemeral").
 		Complete(r)
 }

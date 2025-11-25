@@ -26,6 +26,7 @@ import (
 	"runtime/pprof"
 
 	"github.com/onsi/ginkgo/v2/ginkgo/automaxprocs"
+	"github.com/oxia-io/okk/internal/task"
 	"github.com/spf13/cobra"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -101,6 +102,7 @@ func init() {
 }
 
 func exec(cmd *cobra.Command, args []string) {
+	ctx := cmd.Context()
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -214,6 +216,7 @@ func exec(cmd *cobra.Command, args []string) {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+	taskManager := task.NewManager(ctx)
 
 	if err := (&controller.OxiaClusterReconciler{
 		Client: mgr.GetClient(),
@@ -223,8 +226,9 @@ func exec(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	if err := (&controller.TCMetadataEphemeralReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		TaskManager: taskManager,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TCMetadataEphemeral")
 		os.Exit(1)

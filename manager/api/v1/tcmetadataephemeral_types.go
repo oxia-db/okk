@@ -17,19 +17,18 @@ limitations under the License.
 package v1
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // TCMetadataEphemeralSpec defines the desired state of TCMetadataEphemeral.
 type TCMetadataEphemeralSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	//+kubebuilder:validation:Required
+	Duration time.Duration `json:"duration,omitempty"`
 
-	// Foo is an example field of TCMetadataEphemeral. Edit tcmetadataephemeral_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	//+kubebuilder:validation:Required
+	Worker Worker `json:"worker,omitempty"`
 }
 
 // TCMetadataEphemeralStatus defines the observed state of TCMetadataEphemeral.
