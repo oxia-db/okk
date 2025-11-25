@@ -7,23 +7,32 @@ option go_package = "github.com/oxia-db/okk/proto";
 option java_multiple_files = true;
 
 message Operation {
-  optional Assertion assertion = 1;
+  int64 sequence = 1;
+  optional Assertion assertion = 2;
   oneof operation  {
-    OperationPut put = 2;
-    OperationDelete delete = 3;
-    OperationGet get = 4;
-    OperationList list = 5;
-    OperationScan scan = 6;
+    OperationPut put = 3;
+    OperationDelete delete = 4;
+    OperationGet get = 5;
+    OperationList list = 6;
+    OperationScan scan = 7;
+    OperationSessionRestart session_restart = 8;
   }
 }
 
 message Assertion {
+  optional bool empty = 1;
+}
+
+
+message OperationSessionRestart {
 
 }
 
 message OperationPut {
   string key = 1;
   bytes value = 2;
+
+  bool ephemeral = 3;
 }
 
 message OperationGet {
@@ -31,7 +40,8 @@ message OperationGet {
 }
 
 message OperationList {
-
+  string key_start = 1;
+  string key_end = 2;
 }
 
 message OperationScan {
@@ -44,16 +54,19 @@ message OperationDelete {
 
 
 message ExecuteCommand {
-
+  Operation operation = 2;
 }
 
 enum Status {
   Ok = 0;
   AssertionFailure = 1;
+  RetryableFailure = 2;
+  NonRetryableFailure = 3;
 }
 
 message ExecuteResponse {
-
+  Status status = 1;
+  string status_info = 2;
 }
 
 service Okk {
