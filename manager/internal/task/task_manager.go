@@ -40,10 +40,13 @@ func (m *Manager) ApplyTask(name string, worker string, generatorFactory func() 
 func NewManager(ctx context.Context) *Manager {
 	log := logf.FromContext(ctx)
 	currentContext, currentContextCancel := context.WithCancel(ctx)
+
+	providerManager := NewProviderManager()
 	return &Manager{
-		Logger:     &log,
-		Context:    currentContext,
-		CancelFunc: currentContextCancel,
-		tasks:      make(map[string]Task),
+		Logger:          &log,
+		Context:         currentContext,
+		CancelFunc:      currentContextCancel,
+		tasks:           make(map[string]Task),
+		providerManager: providerManager,
 	}
 }

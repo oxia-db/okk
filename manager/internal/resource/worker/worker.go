@@ -125,9 +125,22 @@ func applyWorkerDeployment(ctx context.Context, client client.Client, testcase c
 					Containers: []corev1.Container{
 						{
 							Name:      "coordinator",
-							Command:   []string{"oxia"},
 							Resources: worker.Resource,
 							Image:     worker.Image,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "OKK_WORKER_ENGINE_NAME",
+									Value: "oxia",
+								},
+								{
+									Name:  "OKK_WORKER_OXIA_SERVICE_URL",
+									Value: worker.TargetCluster.GetServiceURL(),
+								},
+								{
+									Name:  "OKK_WORKER_OXIA_NAMESPACE",
+									Value: "okk",
+								},
+							},
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          ManagementPort.Name,

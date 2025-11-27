@@ -1,0 +1,11 @@
+apiVersion: core.oxia.io/v1
+kind: TCMetadataEphemeral
+metadata:
+  name: okk
+  namespace: okk-workload
+spec:
+  worker:
+    image: mattison/okk-jvm-worker
+    targetCluster:
+      name: okk
+      namespace: okk-workload

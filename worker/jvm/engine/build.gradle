@@ -1,0 +1,30 @@
+plugins {
+    id 'com.google.protobuf' version '0.9.5'
+    id 'java-library'
+}
+
+
+
+dependencies {
+    api "io.grpc:grpc-protobuf:1.77.0"
+    api "io.grpc:grpc-services:1.77.0"
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir '../../../proto'
+        }
+    }
+}
+
+protobuf {
+
+    protoc { artifact = "com.google.protobuf:protoc:3.25.8" }
+    plugins {
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:1.77.0" }
+    }
+    generateProtoTasks {
+        all()*.plugins { grpc {} }
+    }
+}

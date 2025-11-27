@@ -1,3 +1,3 @@
 
-image: mattison/okk-manager:0.1.0
+image: mattison/okk-manager
 replicas: 1

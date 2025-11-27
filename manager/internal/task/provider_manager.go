@@ -40,3 +40,9 @@ func (pm *ProviderManager) GetProvider(worker string) (proto.OkkClient, error) {
 	pm.providers[worker] = client
 	return client, nil
 }
+
+func NewProviderManager() *ProviderManager {
+	return &ProviderManager{
+		providers: make(map[string]proto.OkkClient),
+	}
+}

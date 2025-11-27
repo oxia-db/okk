@@ -3,8 +3,10 @@ module github.com/oxia-io/okk
 go 1.24.0
 
 require (
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
+	github.com/pkg/errors v0.9.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
 	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6
 	gopkg.in/yaml.v2 v2.4.0
@@ -87,7 +89,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/net v0.47.0
 	golang.org/x/oauth2 v0.33.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect

@@ -1,8 +1,9 @@
+IMAGE_REPO =  mattison
+
 
 .PHONY: build-manager
 build-manager:
-	$(MAKE) -C manager docker-build IMG=mattison/okk-manager:0.1.0
-
+	$(MAKE) -C manager docker-build IMG=$(IMAGE_REPO)/okk-manager:latest
 
 .PHONY: proto-manager
 proto-manager:
@@ -19,3 +20,13 @@ proto-manager:
 		--plugin protoc-gen-go-vtproto="${GOBIN}/protoc-gen-go-vtproto" \
 		--go-vtproto_opt=features=marshal+unmarshal+unmarshal_unsafe+size+pool+equal+clone \
 		*.proto
+
+.PHONY: build-worker-jvm
+build-worker-jvm:
+	cd worker/jvm && \
+		./gradlew build
+
+.PHONY: build-worker-jvm-image
+build-worker-jvm-image: build-worker-jvm
+	cd worker/jvm && \
+	docker build . -t $(IMAGE_REPO)/okk-jvm-worker:latest

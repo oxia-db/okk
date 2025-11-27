@@ -24,8 +24,7 @@ import (
 
 // TCMetadataEphemeralSpec defines the desired state of TCMetadataEphemeral.
 type TCMetadataEphemeralSpec struct {
-	//+kubebuilder:validation:Required
-	Duration time.Duration `json:"duration,omitempty"`
+	Duration *time.Duration `json:"duration,omitempty"`
 
 	//+kubebuilder:validation:Required
 	Worker Worker `json:"worker,omitempty"`

@@ -10,5 +10,5 @@ type TargetCluster struct {
 }
 
 func (t *TargetCluster) GetServiceURL() string {
-	return fmt.Sprintf("data-server-%s.data-server-%s.%s.svc.cluster.local:%d", t.Name, t.Name, t.Namespace, 6648)
+	return fmt.Sprintf("data-server-%s.%s.svc.cluster.local:%d", t.Name, t.Namespace, 6648)
 }

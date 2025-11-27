@@ -18,7 +18,7 @@ type metadataEphemeral struct {
 	context.CancelFunc
 	name string
 
-	duration  time.Duration
+	duration  *time.Duration
 	startTime time.Time
 
 	sequence       int64
@@ -28,7 +28,7 @@ type metadataEphemeral struct {
 }
 
 func (m *metadataEphemeral) Next() (*proto.Operation, bool) {
-	if time.Since(m.startTime) > m.duration {
+	if m.duration != nil && time.Since(m.startTime) > *m.duration {
 		m.Info("Finish the metadata ephemeral generator", "name", m.name)
 		return nil, false
 	}
@@ -92,7 +92,7 @@ func (m *metadataEphemeral) maybeResetCounter() bool {
 }
 
 func NewMetadataEphemeralGenerator(logger *logr.Logger, ctx context.Context,
-	name string, duration time.Duration) Generator {
+	name string, duration *time.Duration) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 	namedLogger := logger.WithName("ephemeral-generator")
 	namedLogger.Info("Starting metadata ephemeral generator ", "name", name)

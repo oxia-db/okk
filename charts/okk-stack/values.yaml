@@ -2,8 +2,8 @@ global:
   namespace: okk-system
 
 okk-manager:
-  image: "mattison/okk-manager:0.1.0"
-  replicas: 1
+  image: "mattison/okk-manager"
+  replicas: 0
 
 kube-prometheus-stack:
   prometheus:

@@ -66,8 +66,8 @@ func (r *TCMetadataEphemeralReconciler) Reconcile(ctx context.Context, req ctrl.
 func (r *TCMetadataEphemeralReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.TCMetadataEphemeral{}).
-		For(&corev1.Service{}).
-		For(&appv1.Deployment{}).
+		Owns(&corev1.Service{}).
+		Owns(&appv1.Deployment{}).
 		Named("tcmetadataephemeral").
 		Complete(r)
 }
