@@ -3,7 +3,7 @@ global:
 
 okk-manager:
   image: "mattison/okk-manager"
-  replicas: 0
+  replicas: 1
 
 kube-prometheus-stack:
   prometheus:
