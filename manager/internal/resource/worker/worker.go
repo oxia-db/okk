@@ -75,7 +75,7 @@ func ApplyWorker(ctx context.Context, client client.Client, object client.Object
 func applyWorkerService(ctx context.Context, client client.Client, testCase client.Object, worker *v1.Worker) error {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      testCase.GetName(),
+			Name:      v1.MakeServiceName(testCase.GetName()),
 			Namespace: testCase.GetNamespace(),
 		},
 	}
@@ -124,9 +124,10 @@ func applyWorkerDeployment(ctx context.Context, client client.Client, testcase c
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:      "coordinator",
-							Resources: worker.Resource,
-							Image:     worker.Image,
+							Name:            "coordinator",
+							Resources:       worker.Resource,
+							Image:           worker.Image,
+							ImagePullPolicy: corev1.PullAlways,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "OKK_WORKER_ENGINE_NAME",

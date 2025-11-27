@@ -54,8 +54,8 @@ func (r *TCMetadataEphemeralReconciler) Reconcile(ctx context.Context, req ctrl.
 	if err := worker.ApplyWorker(ctx, r.Client, tc, wc); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.TaskManager.ApplyTask(tc.Name, wc.TargetCluster.GetServiceURL(), func() generator.Generator {
-		return generator.NewMetadataEphemeralGenerator(&log, ctx, tc.Name, tc.Spec.Duration)
+	if err := r.TaskManager.ApplyTask(tc.Name, v1.MakeWorkerServiceURL(tc.Name, tc.Namespace), func() generator.Generator {
+		return generator.NewMetadataEphemeralGenerator(&log, ctx, tc.Name, tc.Spec.Duration, tc.Spec.OpPerSec)
 	}); err != nil {
 		return ctrl.Result{}, err
 	}

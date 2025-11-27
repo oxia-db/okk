@@ -1,7 +1,6 @@
 package task
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -33,7 +32,7 @@ func (pm *ProviderManager) GetProvider(worker string) (proto.OkkClient, error) {
 	}
 	var provider *grpc.ClientConn
 	var err error
-	if provider, err = grpc.NewClient(fmt.Sprintf("http://%s", worker), options...); err != nil {
+	if provider, err = grpc.NewClient(worker, options...); err != nil {
 		return nil, err
 	}
 	client := proto.NewOkkClient(provider)

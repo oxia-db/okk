@@ -73,10 +73,16 @@ func (t *task) run() error {
 				if err := stream.Send(&proto.ExecuteCommand{
 					Operation: operation,
 				}); err != nil {
+					if errors.Is(err, io.EOF) {
+						return backoff.Permanent(errors.New("stream closed"))
+					}
 					return err
 				}
 				response, err := stream.Recv()
 				if err != nil {
+					if errors.Is(err, io.EOF) {
+						return backoff.Permanent(errors.New("stream closed"))
+					}
 					return err
 				}
 				status := response.Status
@@ -88,6 +94,9 @@ func (t *task) run() error {
 				case proto.Status_NonRetryableFailure:
 					return backoff.Permanent(osserrors.Wrap(ErrNonRetryable, response.StatusInfo))
 				case proto.Status_AssertionFailure:
+					if IsEventually(operation.Assertion) {
+						return osserrors.Wrap(ErrRetryable, response.StatusInfo)
+					}
 					return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
 				default:
 					return backoff.Permanent(errors.New("unknown status"))
@@ -96,6 +105,9 @@ func (t *task) run() error {
 				t.Error(err, "Send command failed.", "retry-after", duration)
 			})
 			if err != nil {
+				if errors.Is(err, ErrAssertionFailure) {
+					return backoff.Permanent(err)
+				}
 				return err
 			}
 		}

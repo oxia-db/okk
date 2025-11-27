@@ -8,6 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/oxia-io/okk/internal/proto"
 	"golang.org/x/net/context"
+	"golang.org/x/time/rate"
 )
 
 var _ Generator = &metadataEphemeral{}
@@ -19,6 +20,7 @@ type metadataEphemeral struct {
 	name string
 
 	duration  *time.Duration
+	rateLimit *rate.Limiter
 	startTime time.Time
 
 	sequence       int64
@@ -32,7 +34,11 @@ func (m *metadataEphemeral) Next() (*proto.Operation, bool) {
 		m.Info("Finish the metadata ephemeral generator", "name", m.name)
 		return nil, false
 	}
-	if !m.maybeResetCounter() {
+	if err := m.rateLimit.Wait(m.Context); err != nil {
+		m.Error(err, "Failed to wait for rate limiter")
+		return nil, false
+	}
+	if !m.checkEphemeral && !m.maybeResetCounter() {
 		operation := &proto.Operation{
 			Sequence: m.nextSequence(),
 			Operation: &proto.Operation_Put{
@@ -59,7 +65,7 @@ func (m *metadataEphemeral) Next() (*proto.Operation, bool) {
 	operation = &proto.Operation{
 		Sequence: m.nextSequence(),
 		Assertion: &proto.Assertion{
-			Empty: &assertEmpty,
+			EventuallyEmpty: &assertEmpty,
 		},
 		Operation: &proto.Operation_List{
 			List: &proto.OperationList{
@@ -84,6 +90,7 @@ func (m *metadataEphemeral) nextSequence() int64 {
 
 func (m *metadataEphemeral) maybeResetCounter() bool {
 	if m.counter < m.checkPoint {
+		m.counter++
 		return false
 	}
 	m.counter = 0
@@ -92,10 +99,14 @@ func (m *metadataEphemeral) maybeResetCounter() bool {
 }
 
 func NewMetadataEphemeralGenerator(logger *logr.Logger, ctx context.Context,
-	name string, duration *time.Duration) Generator {
+	name string, duration *time.Duration, opPerSec *int) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 	namedLogger := logger.WithName("ephemeral-generator")
 	namedLogger.Info("Starting metadata ephemeral generator ", "name", name)
+	ops := 10
+	if opPerSec != nil && *opPerSec > 0 {
+		ops = *opPerSec
+	}
 	me := metadataEphemeral{
 		Logger:     &namedLogger,
 		Context:    currentContext,
@@ -104,6 +115,7 @@ func NewMetadataEphemeralGenerator(logger *logr.Logger, ctx context.Context,
 		duration:   duration,
 		startTime:  time.Now(),
 		sequence:   0,
+		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), ops),
 	}
 	me.maybeResetCounter()
 	return &me

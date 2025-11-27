@@ -236,10 +236,11 @@ func (*Operation_Scan) isOperation_Operation() {}
 func (*Operation_SessionRestart) isOperation_Operation() {}
 
 type Assertion struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Empty         *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Empty           *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
+	EventuallyEmpty *bool                  `protobuf:"varint,2,opt,name=eventually_empty,json=eventuallyEmpty,proto3,oneof" json:"eventually_empty,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Assertion) Reset() {
@@ -275,6 +276,13 @@ func (*Assertion) Descriptor() ([]byte, []int) {
 func (x *Assertion) GetEmpty() bool {
 	if x != nil && x.Empty != nil {
 		return *x.Empty
+	}
+	return false
+}
+
+func (x *Assertion) GetEventuallyEmpty() bool {
+	if x != nil && x.EventuallyEmpty != nil {
+		return *x.EventuallyEmpty
 	}
 	return false
 }
@@ -647,10 +655,12 @@ const file_okk_proto_rawDesc = "" +
 	"\x0fsession_restart\x18\b \x01(\v2-.io.oxia.okk.proto.v1.OperationSessionRestartH\x00R\x0esessionRestartB\v\n" +
 	"\toperationB\f\n" +
 	"\n" +
-	"_assertion\"0\n" +
+	"_assertion\"u\n" +
 	"\tAssertion\x12\x19\n" +
-	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01B\b\n" +
-	"\x06_empty\"\x19\n" +
+	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12.\n" +
+	"\x10eventually_empty\x18\x02 \x01(\bH\x01R\x0feventuallyEmpty\x88\x01\x01B\b\n" +
+	"\x06_emptyB\x13\n" +
+	"\x11_eventually_empty\"\x19\n" +
 	"\x17OperationSessionRestart\"T\n" +
 	"\fOperationPut\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

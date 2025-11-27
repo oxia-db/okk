@@ -1,6 +1,7 @@
 package io.github.oxia.okk.worker;
 
 import com.google.common.base.Throwables;
+import com.google.protobuf.util.JsonFormat;
 import io.github.oxia.okk.worker.engine.Engine;
 import io.grpc.stub.StreamObserver;
 import io.oxia.okk.proto.v1.ExecuteCommand;
@@ -23,8 +24,10 @@ public class WorkerService extends OkkGrpc.OkkImplBase {
 
             @Override
             public void onNext(ExecuteCommand command) {
-                log.info("Received command: {}", command);
                 try {
+                    log.info("Received command: {}", JsonFormat.printer()
+                            .omittingInsignificantWhitespace()
+                            .print(command));
                     final ExecuteResponse executeResponse = engine.onCommand(command);
                     responseObserver.onNext(executeResponse);
                 } catch (Throwable ex) {

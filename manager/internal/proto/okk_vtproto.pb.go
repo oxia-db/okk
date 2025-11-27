@@ -104,6 +104,10 @@ func (m *Assertion) CloneVT() *Assertion {
 		tmpVal := *rhs
 		r.Empty = &tmpVal
 	}
+	if rhs := m.EventuallyEmpty; rhs != nil {
+		tmpVal := *rhs
+		r.EventuallyEmpty = &tmpVal
+	}
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -446,6 +450,9 @@ func (this *Assertion) EqualVT(that *Assertion) bool {
 		return false
 	}
 	if p, q := this.Empty, that.Empty; (p == nil && q != nil) || (p != nil && (q == nil || *p != *q)) {
+		return false
+	}
+	if p, q := this.EventuallyEmpty, that.EventuallyEmpty; (p == nil && q != nil) || (p != nil && (q == nil || *p != *q)) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -810,6 +817,16 @@ func (m *Assertion) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.EventuallyEmpty != nil {
+		i--
+		if *m.EventuallyEmpty {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x10
 	}
 	if m.Empty != nil {
 		i--
@@ -1247,6 +1264,9 @@ func (m *Assertion) SizeVT() (n int) {
 	var l int
 	_ = l
 	if m.Empty != nil {
+		n += 2
+	}
+	if m.EventuallyEmpty != nil {
 		n += 2
 	}
 	n += len(m.unknownFields)
@@ -1765,6 +1785,27 @@ func (m *Assertion) UnmarshalVT(dAtA []byte) error {
 			}
 			b := bool(v != 0)
 			m.Empty = &b
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EventuallyEmpty", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.EventuallyEmpty = &b
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -2834,6 +2875,27 @@ func (m *Assertion) UnmarshalVTUnsafe(dAtA []byte) error {
 			}
 			b := bool(v != 0)
 			m.Empty = &b
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EventuallyEmpty", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.EventuallyEmpty = &b
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

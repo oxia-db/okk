@@ -21,6 +21,7 @@ message Operation {
 
 message Assertion {
   optional bool empty = 1;
+  optional bool eventually_empty = 2;
 }
 
 
