@@ -13,12 +13,20 @@ import (
 	"github.com/oxia-io/okk/internal/proto"
 	"github.com/oxia-io/okk/internal/task/generator"
 	osserrors "github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
 	ErrRetryable        = errors.New("retryable error")
 	ErrNonRetryable     = errors.New("non retryable error")
 	ErrAssertionFailure = errors.New("assertion failure")
+
+	operationLatencyHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "task_operation_duration_seconds",
+		Help:    "",
+		Buckets: prometheus.ExponentialBuckets(0.001, 2, 16),
+	}, []string{"task_name", "status"})
 )
 
 type Task interface {
@@ -37,6 +45,7 @@ type task struct {
 
 	generator       generator.Generator
 	providerManager *ProviderManager
+	name            string
 	worker          string
 }
 
@@ -70,6 +79,7 @@ func (t *task) run() error {
 	for {
 		if operation, hasNext := t.generator.Next(); hasNext {
 			err = backoff.RetryNotify(func() error {
+				startTime := time.Now()
 				if err := stream.Send(&proto.ExecuteCommand{
 					Operation: operation,
 				}); err != nil {
@@ -88,17 +98,23 @@ func (t *task) run() error {
 				status := response.Status
 				switch status {
 				case proto.Status_Ok:
+					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_Ok.String()).Observe(time.Since(startTime).Seconds())
 					return nil
 				case proto.Status_RetryableFailure:
+					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
 					return osserrors.Wrap(ErrRetryable, response.StatusInfo)
 				case proto.Status_NonRetryableFailure:
+					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_NonRetryableFailure.String()).Observe(time.Since(startTime).Seconds())
 					return backoff.Permanent(osserrors.Wrap(ErrNonRetryable, response.StatusInfo))
 				case proto.Status_AssertionFailure:
 					if IsEventually(operation.Assertion) {
+						operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
 						return osserrors.Wrap(ErrRetryable, response.StatusInfo)
 					}
+					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_AssertionFailure.String()).Observe(time.Since(startTime).Seconds())
 					return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
 				default:
+					operationLatencyHistogram.WithLabelValues(t.name, "Unknown").Observe(time.Since(startTime).Seconds())
 					return backoff.Permanent(errors.New("unknown status"))
 				}
 			}, backoff.NewExponentialBackOff(), func(err error, duration time.Duration) {
@@ -118,13 +134,15 @@ func NewTask(ctx context.Context, logger *logr.Logger, providerManager *Provider
 	name string, generator generator.Generator, worker string) Task {
 	currentContext, contextCancel := context.WithCancel(ctx)
 	taskLogger := logger.WithName(fmt.Sprintf("task-%s", name))
-	return &task{
+	t := &task{
 		Context:         currentContext,
 		CancelFunc:      contextCancel,
 		Logger:          &taskLogger,
 		WaitGroup:       sync.WaitGroup{},
 		generator:       generator,
+		name:            name,
 		worker:          worker,
 		providerManager: providerManager,
 	}
+	return t
 }
