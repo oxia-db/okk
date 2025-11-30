@@ -76,13 +76,13 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 
 	flags := Cmd.Flags()
-	flags.StringVar(&metricsAddr, "metrics-bind-address", "localhost:8080", "The address the metrics endpoint binds to. "+
+	flags.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metrics endpoint binds to. "+
 		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flags.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flags.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flags.BoolVar(&secureMetrics, "metrics-secure", true,
+	flags.BoolVar(&secureMetrics, "metrics-secure", false,
 		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
 	flags.StringVar(&webhookCertPath, "webhook-cert-path", "", "The directory that contains the webhook certificate.")
 	flags.StringVar(&webhookCertName, "webhook-cert-name", "tls.crt", "The name of the webhook certificate file.")

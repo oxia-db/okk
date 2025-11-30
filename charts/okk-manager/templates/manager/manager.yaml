@@ -33,7 +33,10 @@ spec:
           image: "{{ required "image is a required field" .Values.image}}"
           imagePullPolicy: Always
           name: manager
-          ports: [ ]
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
