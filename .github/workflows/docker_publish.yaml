@@ -45,6 +45,15 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build worker
+        run: |
+          cd worker/jvm
+          ./gradlew build
       - name: Build and push worker
         uses: docker/build-push-action@v3
         with:
