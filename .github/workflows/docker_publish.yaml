@@ -33,7 +33,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: mattison/oxia-worker
+          images: mattison/okk-jvm-worker
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -48,8 +48,8 @@ jobs:
       - name: Build and push worker
         uses: docker/build-push-action@v3
         with:
-          context: ./worker
-          file: ./worker/Dockerfile
+          context: ./worker/jvm
+          file: ./worker/jvm/Dockerfile
           platforms: linux/x86_64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -78,7 +78,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: mattison/oxia-manager
+          images: mattison/okk-manager
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
