@@ -33,7 +33,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: oxia/oxia-worker
+          images: mattison/oxia-worker
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -78,7 +78,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: oxia/oxia-manager
+          images: mattison/oxia-manager
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
