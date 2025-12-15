@@ -21,6 +21,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type NotificationType int32
+
+const (
+	NotificationType_KEY_CREATED       NotificationType = 0
+	NotificationType_KEY_MODIFIED      NotificationType = 1
+	NotificationType_KEY_DELETED       NotificationType = 2
+	NotificationType_KEY_RANGE_DELETED NotificationType = 3
+)
+
+// Enum value maps for NotificationType.
+var (
+	NotificationType_name = map[int32]string{
+		0: "KEY_CREATED",
+		1: "KEY_MODIFIED",
+		2: "KEY_DELETED",
+		3: "KEY_RANGE_DELETED",
+	}
+	NotificationType_value = map[string]int32{
+		"KEY_CREATED":       0,
+		"KEY_MODIFIED":      1,
+		"KEY_DELETED":       2,
+		"KEY_RANGE_DELETED": 3,
+	}
+)
+
+func (x NotificationType) Enum() *NotificationType {
+	p := new(NotificationType)
+	*p = x
+	return p
+}
+
+func (x NotificationType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NotificationType) Descriptor() protoreflect.EnumDescriptor {
+	return file_okk_proto_enumTypes[0].Descriptor()
+}
+
+func (NotificationType) Type() protoreflect.EnumType {
+	return &file_okk_proto_enumTypes[0]
+}
+
+func (x NotificationType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NotificationType.Descriptor instead.
+func (NotificationType) EnumDescriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{0}
+}
+
 type Status int32
 
 const (
@@ -57,11 +109,11 @@ func (x Status) String() string {
 }
 
 func (Status) Descriptor() protoreflect.EnumDescriptor {
-	return file_okk_proto_enumTypes[0].Descriptor()
+	return file_okk_proto_enumTypes[1].Descriptor()
 }
 
 func (Status) Type() protoreflect.EnumType {
-	return &file_okk_proto_enumTypes[0]
+	return &file_okk_proto_enumTypes[1]
 }
 
 func (x Status) Number() protoreflect.EnumNumber {
@@ -70,13 +122,330 @@ func (x Status) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Status.Descriptor instead.
 func (Status) EnumDescriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{1}
+}
+
+type OperationSessionRestart struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationSessionRestart) Reset() {
+	*x = OperationSessionRestart{}
+	mi := &file_okk_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationSessionRestart) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationSessionRestart) ProtoMessage() {}
+
+func (x *OperationSessionRestart) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationSessionRestart.ProtoReflect.Descriptor instead.
+func (*OperationSessionRestart) Descriptor() ([]byte, []int) {
 	return file_okk_proto_rawDescGZIP(), []int{0}
 }
 
+type OperationPut struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value         []byte                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Ephemeral     bool                   `protobuf:"varint,3,opt,name=ephemeral,proto3" json:"ephemeral,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationPut) Reset() {
+	*x = OperationPut{}
+	mi := &file_okk_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationPut) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationPut) ProtoMessage() {}
+
+func (x *OperationPut) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationPut.ProtoReflect.Descriptor instead.
+func (*OperationPut) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *OperationPut) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *OperationPut) GetValue() []byte {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *OperationPut) GetEphemeral() bool {
+	if x != nil {
+		return x.Ephemeral
+	}
+	return false
+}
+
+type OperationGet struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationGet) Reset() {
+	*x = OperationGet{}
+	mi := &file_okk_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationGet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationGet) ProtoMessage() {}
+
+func (x *OperationGet) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationGet.ProtoReflect.Descriptor instead.
+func (*OperationGet) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{2}
+}
+
+type OperationList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	KeyStart      string                 `protobuf:"bytes,1,opt,name=key_start,json=keyStart,proto3" json:"key_start,omitempty"`
+	KeyEnd        string                 `protobuf:"bytes,2,opt,name=key_end,json=keyEnd,proto3" json:"key_end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationList) Reset() {
+	*x = OperationList{}
+	mi := &file_okk_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationList) ProtoMessage() {}
+
+func (x *OperationList) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationList.ProtoReflect.Descriptor instead.
+func (*OperationList) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *OperationList) GetKeyStart() string {
+	if x != nil {
+		return x.KeyStart
+	}
+	return ""
+}
+
+func (x *OperationList) GetKeyEnd() string {
+	if x != nil {
+		return x.KeyEnd
+	}
+	return ""
+}
+
+type OperationScan struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationScan) Reset() {
+	*x = OperationScan{}
+	mi := &file_okk_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationScan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationScan) ProtoMessage() {}
+
+func (x *OperationScan) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationScan.ProtoReflect.Descriptor instead.
+func (*OperationScan) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{4}
+}
+
+type OperationDelete struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationDelete) Reset() {
+	*x = OperationDelete{}
+	mi := &file_okk_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationDelete) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationDelete) ProtoMessage() {}
+
+func (x *OperationDelete) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationDelete.ProtoReflect.Descriptor instead.
+func (*OperationDelete) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *OperationDelete) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+type OperationRangeDelete struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	KeyStart      string                 `protobuf:"bytes,1,opt,name=key_start,json=keyStart,proto3" json:"key_start,omitempty"`
+	KeyEnd        string                 `protobuf:"bytes,2,opt,name=key_end,json=keyEnd,proto3" json:"key_end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationRangeDelete) Reset() {
+	*x = OperationRangeDelete{}
+	mi := &file_okk_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationRangeDelete) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationRangeDelete) ProtoMessage() {}
+
+func (x *OperationRangeDelete) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationRangeDelete.ProtoReflect.Descriptor instead.
+func (*OperationRangeDelete) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *OperationRangeDelete) GetKeyStart() string {
+	if x != nil {
+		return x.KeyStart
+	}
+	return ""
+}
+
+func (x *OperationRangeDelete) GetKeyEnd() string {
+	if x != nil {
+		return x.KeyEnd
+	}
+	return ""
+}
+
 type Operation struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	Sequence  int64                  `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
-	Assertion *Assertion             `protobuf:"bytes,2,opt,name=assertion,proto3,oneof" json:"assertion,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Sequence     int64                  `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
+	Assertion    *Assertion             `protobuf:"bytes,2,opt,name=assertion,proto3,oneof" json:"assertion,omitempty"`
+	Precondition *Precondition          `protobuf:"bytes,3,opt,name=precondition,proto3,oneof" json:"precondition,omitempty"`
 	// Types that are valid to be assigned to Operation:
 	//
 	//	*Operation_Put
@@ -85,6 +454,7 @@ type Operation struct {
 	//	*Operation_List
 	//	*Operation_Scan
 	//	*Operation_SessionRestart
+	//	*Operation_RangeDelete
 	Operation     isOperation_Operation `protobuf_oneof:"operation"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -92,7 +462,7 @@ type Operation struct {
 
 func (x *Operation) Reset() {
 	*x = Operation{}
-	mi := &file_okk_proto_msgTypes[0]
+	mi := &file_okk_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -104,7 +474,7 @@ func (x *Operation) String() string {
 func (*Operation) ProtoMessage() {}
 
 func (x *Operation) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[0]
+	mi := &file_okk_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -117,7 +487,7 @@ func (x *Operation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Operation.ProtoReflect.Descriptor instead.
 func (*Operation) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{0}
+	return file_okk_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Operation) GetSequence() int64 {
@@ -130,6 +500,13 @@ func (x *Operation) GetSequence() int64 {
 func (x *Operation) GetAssertion() *Assertion {
 	if x != nil {
 		return x.Assertion
+	}
+	return nil
+}
+
+func (x *Operation) GetPrecondition() *Precondition {
+	if x != nil {
+		return x.Precondition
 	}
 	return nil
 }
@@ -195,32 +572,45 @@ func (x *Operation) GetSessionRestart() *OperationSessionRestart {
 	return nil
 }
 
+func (x *Operation) GetRangeDelete() *OperationRangeDelete {
+	if x != nil {
+		if x, ok := x.Operation.(*Operation_RangeDelete); ok {
+			return x.RangeDelete
+		}
+	}
+	return nil
+}
+
 type isOperation_Operation interface {
 	isOperation_Operation()
 }
 
 type Operation_Put struct {
-	Put *OperationPut `protobuf:"bytes,3,opt,name=put,proto3,oneof"`
+	Put *OperationPut `protobuf:"bytes,4,opt,name=put,proto3,oneof"`
 }
 
 type Operation_Delete struct {
-	Delete *OperationDelete `protobuf:"bytes,4,opt,name=delete,proto3,oneof"`
+	Delete *OperationDelete `protobuf:"bytes,5,opt,name=delete,proto3,oneof"`
 }
 
 type Operation_Get struct {
-	Get *OperationGet `protobuf:"bytes,5,opt,name=get,proto3,oneof"`
+	Get *OperationGet `protobuf:"bytes,6,opt,name=get,proto3,oneof"`
 }
 
 type Operation_List struct {
-	List *OperationList `protobuf:"bytes,6,opt,name=list,proto3,oneof"`
+	List *OperationList `protobuf:"bytes,7,opt,name=list,proto3,oneof"`
 }
 
 type Operation_Scan struct {
-	Scan *OperationScan `protobuf:"bytes,7,opt,name=scan,proto3,oneof"`
+	Scan *OperationScan `protobuf:"bytes,8,opt,name=scan,proto3,oneof"`
 }
 
 type Operation_SessionRestart struct {
-	SessionRestart *OperationSessionRestart `protobuf:"bytes,8,opt,name=session_restart,json=sessionRestart,proto3,oneof"`
+	SessionRestart *OperationSessionRestart `protobuf:"bytes,9,opt,name=session_restart,json=sessionRestart,proto3,oneof"`
+}
+
+type Operation_RangeDelete struct {
+	RangeDelete *OperationRangeDelete `protobuf:"bytes,10,opt,name=range_delete,json=rangeDelete,proto3,oneof"`
 }
 
 func (*Operation_Put) isOperation_Operation() {}
@@ -235,17 +625,132 @@ func (*Operation_Scan) isOperation_Operation() {}
 
 func (*Operation_SessionRestart) isOperation_Operation() {}
 
+func (*Operation_RangeDelete) isOperation_Operation() {}
+
+type Precondition struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	WatchNotification *bool                  `protobuf:"varint,1,opt,name=watch_notification,json=watchNotification,proto3,oneof" json:"watch_notification,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *Precondition) Reset() {
+	*x = Precondition{}
+	mi := &file_okk_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Precondition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Precondition) ProtoMessage() {}
+
+func (x *Precondition) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Precondition.ProtoReflect.Descriptor instead.
+func (*Precondition) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *Precondition) GetWatchNotification() bool {
+	if x != nil && x.WatchNotification != nil {
+		return *x.WatchNotification
+	}
+	return false
+}
+
+type Notification struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Type          NotificationType       `protobuf:"varint,1,opt,name=type,proto3,enum=io.oxia.okk.proto.v1.NotificationType" json:"type,omitempty"`
+	Key           *string                `protobuf:"bytes,2,opt,name=key,proto3,oneof" json:"key,omitempty"`
+	KeyStart      *string                `protobuf:"bytes,3,opt,name=key_start,json=keyStart,proto3,oneof" json:"key_start,omitempty"`
+	KeyEnd        *string                `protobuf:"bytes,4,opt,name=key_end,json=keyEnd,proto3,oneof" json:"key_end,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Notification) Reset() {
+	*x = Notification{}
+	mi := &file_okk_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Notification) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Notification) ProtoMessage() {}
+
+func (x *Notification) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Notification.ProtoReflect.Descriptor instead.
+func (*Notification) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Notification) GetType() NotificationType {
+	if x != nil {
+		return x.Type
+	}
+	return NotificationType_KEY_CREATED
+}
+
+func (x *Notification) GetKey() string {
+	if x != nil && x.Key != nil {
+		return *x.Key
+	}
+	return ""
+}
+
+func (x *Notification) GetKeyStart() string {
+	if x != nil && x.KeyStart != nil {
+		return *x.KeyStart
+	}
+	return ""
+}
+
+func (x *Notification) GetKeyEnd() string {
+	if x != nil && x.KeyEnd != nil {
+		return *x.KeyEnd
+	}
+	return ""
+}
+
 type Assertion struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Empty           *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
 	EventuallyEmpty *bool                  `protobuf:"varint,2,opt,name=eventually_empty,json=eventuallyEmpty,proto3,oneof" json:"eventually_empty,omitempty"`
+	Notification    *Notification          `protobuf:"bytes,3,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Assertion) Reset() {
 	*x = Assertion{}
-	mi := &file_okk_proto_msgTypes[1]
+	mi := &file_okk_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -257,7 +762,7 @@ func (x *Assertion) String() string {
 func (*Assertion) ProtoMessage() {}
 
 func (x *Assertion) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[1]
+	mi := &file_okk_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,7 +775,7 @@ func (x *Assertion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Assertion.ProtoReflect.Descriptor instead.
 func (*Assertion) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{1}
+	return file_okk_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Assertion) GetEmpty() bool {
@@ -287,260 +792,11 @@ func (x *Assertion) GetEventuallyEmpty() bool {
 	return false
 }
 
-type OperationSessionRestart struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OperationSessionRestart) Reset() {
-	*x = OperationSessionRestart{}
-	mi := &file_okk_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OperationSessionRestart) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OperationSessionRestart) ProtoMessage() {}
-
-func (x *OperationSessionRestart) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[2]
+func (x *Assertion) GetNotification() *Notification {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OperationSessionRestart.ProtoReflect.Descriptor instead.
-func (*OperationSessionRestart) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{2}
-}
-
-type OperationPut struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value         []byte                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	Ephemeral     bool                   `protobuf:"varint,3,opt,name=ephemeral,proto3" json:"ephemeral,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OperationPut) Reset() {
-	*x = OperationPut{}
-	mi := &file_okk_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OperationPut) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OperationPut) ProtoMessage() {}
-
-func (x *OperationPut) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OperationPut.ProtoReflect.Descriptor instead.
-func (*OperationPut) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *OperationPut) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *OperationPut) GetValue() []byte {
-	if x != nil {
-		return x.Value
+		return x.Notification
 	}
 	return nil
-}
-
-func (x *OperationPut) GetEphemeral() bool {
-	if x != nil {
-		return x.Ephemeral
-	}
-	return false
-}
-
-type OperationGet struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OperationGet) Reset() {
-	*x = OperationGet{}
-	mi := &file_okk_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OperationGet) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OperationGet) ProtoMessage() {}
-
-func (x *OperationGet) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OperationGet.ProtoReflect.Descriptor instead.
-func (*OperationGet) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{4}
-}
-
-type OperationList struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	KeyStart      string                 `protobuf:"bytes,1,opt,name=key_start,json=keyStart,proto3" json:"key_start,omitempty"`
-	KeyEnd        string                 `protobuf:"bytes,2,opt,name=key_end,json=keyEnd,proto3" json:"key_end,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OperationList) Reset() {
-	*x = OperationList{}
-	mi := &file_okk_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OperationList) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OperationList) ProtoMessage() {}
-
-func (x *OperationList) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OperationList.ProtoReflect.Descriptor instead.
-func (*OperationList) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *OperationList) GetKeyStart() string {
-	if x != nil {
-		return x.KeyStart
-	}
-	return ""
-}
-
-func (x *OperationList) GetKeyEnd() string {
-	if x != nil {
-		return x.KeyEnd
-	}
-	return ""
-}
-
-type OperationScan struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OperationScan) Reset() {
-	*x = OperationScan{}
-	mi := &file_okk_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OperationScan) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OperationScan) ProtoMessage() {}
-
-func (x *OperationScan) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OperationScan.ProtoReflect.Descriptor instead.
-func (*OperationScan) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{6}
-}
-
-type OperationDelete struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OperationDelete) Reset() {
-	*x = OperationDelete{}
-	mi := &file_okk_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OperationDelete) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OperationDelete) ProtoMessage() {}
-
-func (x *OperationDelete) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OperationDelete.ProtoReflect.Descriptor instead.
-func (*OperationDelete) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{7}
 }
 
 type ExecuteCommand struct {
@@ -552,7 +808,7 @@ type ExecuteCommand struct {
 
 func (x *ExecuteCommand) Reset() {
 	*x = ExecuteCommand{}
-	mi := &file_okk_proto_msgTypes[8]
+	mi := &file_okk_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -564,7 +820,7 @@ func (x *ExecuteCommand) String() string {
 func (*ExecuteCommand) ProtoMessage() {}
 
 func (x *ExecuteCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[8]
+	mi := &file_okk_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -577,7 +833,7 @@ func (x *ExecuteCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteCommand.ProtoReflect.Descriptor instead.
 func (*ExecuteCommand) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{8}
+	return file_okk_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ExecuteCommand) GetOperation() *Operation {
@@ -597,7 +853,7 @@ type ExecuteResponse struct {
 
 func (x *ExecuteResponse) Reset() {
 	*x = ExecuteResponse{}
-	mi := &file_okk_proto_msgTypes[9]
+	mi := &file_okk_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -609,7 +865,7 @@ func (x *ExecuteResponse) String() string {
 func (*ExecuteResponse) ProtoMessage() {}
 
 func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[9]
+	mi := &file_okk_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -622,7 +878,7 @@ func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteResponse) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{9}
+	return file_okk_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ExecuteResponse) GetStatus() Status {
@@ -643,24 +899,7 @@ var File_okk_proto protoreflect.FileDescriptor
 
 const file_okk_proto_rawDesc = "" +
 	"\n" +
-	"\tokk.proto\x12\x14io.oxia.okk.proto.v1\"\x87\x04\n" +
-	"\tOperation\x12\x1a\n" +
-	"\bsequence\x18\x01 \x01(\x03R\bsequence\x12B\n" +
-	"\tassertion\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.AssertionH\x01R\tassertion\x88\x01\x01\x126\n" +
-	"\x03put\x18\x03 \x01(\v2\".io.oxia.okk.proto.v1.OperationPutH\x00R\x03put\x12?\n" +
-	"\x06delete\x18\x04 \x01(\v2%.io.oxia.okk.proto.v1.OperationDeleteH\x00R\x06delete\x126\n" +
-	"\x03get\x18\x05 \x01(\v2\".io.oxia.okk.proto.v1.OperationGetH\x00R\x03get\x129\n" +
-	"\x04list\x18\x06 \x01(\v2#.io.oxia.okk.proto.v1.OperationListH\x00R\x04list\x129\n" +
-	"\x04scan\x18\a \x01(\v2#.io.oxia.okk.proto.v1.OperationScanH\x00R\x04scan\x12X\n" +
-	"\x0fsession_restart\x18\b \x01(\v2-.io.oxia.okk.proto.v1.OperationSessionRestartH\x00R\x0esessionRestartB\v\n" +
-	"\toperationB\f\n" +
-	"\n" +
-	"_assertion\"u\n" +
-	"\tAssertion\x12\x19\n" +
-	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12.\n" +
-	"\x10eventually_empty\x18\x02 \x01(\bH\x01R\x0feventuallyEmpty\x88\x01\x01B\b\n" +
-	"\x06_emptyB\x13\n" +
-	"\x11_eventually_empty\"\x19\n" +
+	"\tokk.proto\x12\x14io.oxia.okk.proto.v1\"\x19\n" +
 	"\x17OperationSessionRestart\"T\n" +
 	"\fOperationPut\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -670,14 +909,59 @@ const file_okk_proto_rawDesc = "" +
 	"\rOperationList\x12\x1b\n" +
 	"\tkey_start\x18\x01 \x01(\tR\bkeyStart\x12\x17\n" +
 	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"\x0f\n" +
-	"\rOperationScan\"\x11\n" +
-	"\x0fOperationDelete\"O\n" +
+	"\rOperationScan\"#\n" +
+	"\x0fOperationDelete\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\"L\n" +
+	"\x14OperationRangeDelete\x12\x1b\n" +
+	"\tkey_start\x18\x01 \x01(\tR\bkeyStart\x12\x17\n" +
+	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"\xb6\x05\n" +
+	"\tOperation\x12\x1a\n" +
+	"\bsequence\x18\x01 \x01(\x03R\bsequence\x12B\n" +
+	"\tassertion\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.AssertionH\x01R\tassertion\x88\x01\x01\x12K\n" +
+	"\fprecondition\x18\x03 \x01(\v2\".io.oxia.okk.proto.v1.PreconditionH\x02R\fprecondition\x88\x01\x01\x126\n" +
+	"\x03put\x18\x04 \x01(\v2\".io.oxia.okk.proto.v1.OperationPutH\x00R\x03put\x12?\n" +
+	"\x06delete\x18\x05 \x01(\v2%.io.oxia.okk.proto.v1.OperationDeleteH\x00R\x06delete\x126\n" +
+	"\x03get\x18\x06 \x01(\v2\".io.oxia.okk.proto.v1.OperationGetH\x00R\x03get\x129\n" +
+	"\x04list\x18\a \x01(\v2#.io.oxia.okk.proto.v1.OperationListH\x00R\x04list\x129\n" +
+	"\x04scan\x18\b \x01(\v2#.io.oxia.okk.proto.v1.OperationScanH\x00R\x04scan\x12X\n" +
+	"\x0fsession_restart\x18\t \x01(\v2-.io.oxia.okk.proto.v1.OperationSessionRestartH\x00R\x0esessionRestart\x12O\n" +
+	"\frange_delete\x18\n" +
+	" \x01(\v2*.io.oxia.okk.proto.v1.OperationRangeDeleteH\x00R\vrangeDeleteB\v\n" +
+	"\toperationB\f\n" +
+	"\n" +
+	"_assertionB\x0f\n" +
+	"\r_precondition\"Y\n" +
+	"\fPrecondition\x122\n" +
+	"\x12watch_notification\x18\x01 \x01(\bH\x00R\x11watchNotification\x88\x01\x01B\x15\n" +
+	"\x13_watch_notification\"\xc3\x01\n" +
+	"\fNotification\x12:\n" +
+	"\x04type\x18\x01 \x01(\x0e2&.io.oxia.okk.proto.v1.NotificationTypeR\x04type\x12\x15\n" +
+	"\x03key\x18\x02 \x01(\tH\x00R\x03key\x88\x01\x01\x12 \n" +
+	"\tkey_start\x18\x03 \x01(\tH\x01R\bkeyStart\x88\x01\x01\x12\x1c\n" +
+	"\akey_end\x18\x04 \x01(\tH\x02R\x06keyEnd\x88\x01\x01B\x06\n" +
+	"\x04_keyB\f\n" +
+	"\n" +
+	"_key_startB\n" +
+	"\n" +
+	"\b_key_end\"\xd3\x01\n" +
+	"\tAssertion\x12\x19\n" +
+	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12.\n" +
+	"\x10eventually_empty\x18\x02 \x01(\bH\x01R\x0feventuallyEmpty\x88\x01\x01\x12K\n" +
+	"\fnotification\x18\x03 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x02R\fnotification\x88\x01\x01B\b\n" +
+	"\x06_emptyB\x13\n" +
+	"\x11_eventually_emptyB\x0f\n" +
+	"\r_notification\"O\n" +
 	"\x0eExecuteCommand\x12=\n" +
 	"\toperation\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.OperationR\toperation\"h\n" +
 	"\x0fExecuteResponse\x124\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1c.io.oxia.okk.proto.v1.StatusR\x06status\x12\x1f\n" +
 	"\vstatus_info\x18\x02 \x01(\tR\n" +
-	"statusInfo*U\n" +
+	"statusInfo*]\n" +
+	"\x10NotificationType\x12\x0f\n" +
+	"\vKEY_CREATED\x10\x00\x12\x10\n" +
+	"\fKEY_MODIFIED\x10\x01\x12\x0f\n" +
+	"\vKEY_DELETED\x10\x02\x12\x15\n" +
+	"\x11KEY_RANGE_DELETED\x10\x03*U\n" +
 	"\x06Status\x12\x06\n" +
 	"\x02Ok\x10\x00\x12\x14\n" +
 	"\x10AssertionFailure\x10\x01\x12\x14\n" +
@@ -698,38 +982,46 @@ func file_okk_proto_rawDescGZIP() []byte {
 	return file_okk_proto_rawDescData
 }
 
-var file_okk_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_okk_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_okk_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_okk_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_okk_proto_goTypes = []any{
-	(Status)(0),                     // 0: io.oxia.okk.proto.v1.Status
-	(*Operation)(nil),               // 1: io.oxia.okk.proto.v1.Operation
-	(*Assertion)(nil),               // 2: io.oxia.okk.proto.v1.Assertion
-	(*OperationSessionRestart)(nil), // 3: io.oxia.okk.proto.v1.OperationSessionRestart
-	(*OperationPut)(nil),            // 4: io.oxia.okk.proto.v1.OperationPut
-	(*OperationGet)(nil),            // 5: io.oxia.okk.proto.v1.OperationGet
-	(*OperationList)(nil),           // 6: io.oxia.okk.proto.v1.OperationList
-	(*OperationScan)(nil),           // 7: io.oxia.okk.proto.v1.OperationScan
-	(*OperationDelete)(nil),         // 8: io.oxia.okk.proto.v1.OperationDelete
-	(*ExecuteCommand)(nil),          // 9: io.oxia.okk.proto.v1.ExecuteCommand
-	(*ExecuteResponse)(nil),         // 10: io.oxia.okk.proto.v1.ExecuteResponse
+	(NotificationType)(0),           // 0: io.oxia.okk.proto.v1.NotificationType
+	(Status)(0),                     // 1: io.oxia.okk.proto.v1.Status
+	(*OperationSessionRestart)(nil), // 2: io.oxia.okk.proto.v1.OperationSessionRestart
+	(*OperationPut)(nil),            // 3: io.oxia.okk.proto.v1.OperationPut
+	(*OperationGet)(nil),            // 4: io.oxia.okk.proto.v1.OperationGet
+	(*OperationList)(nil),           // 5: io.oxia.okk.proto.v1.OperationList
+	(*OperationScan)(nil),           // 6: io.oxia.okk.proto.v1.OperationScan
+	(*OperationDelete)(nil),         // 7: io.oxia.okk.proto.v1.OperationDelete
+	(*OperationRangeDelete)(nil),    // 8: io.oxia.okk.proto.v1.OperationRangeDelete
+	(*Operation)(nil),               // 9: io.oxia.okk.proto.v1.Operation
+	(*Precondition)(nil),            // 10: io.oxia.okk.proto.v1.Precondition
+	(*Notification)(nil),            // 11: io.oxia.okk.proto.v1.Notification
+	(*Assertion)(nil),               // 12: io.oxia.okk.proto.v1.Assertion
+	(*ExecuteCommand)(nil),          // 13: io.oxia.okk.proto.v1.ExecuteCommand
+	(*ExecuteResponse)(nil),         // 14: io.oxia.okk.proto.v1.ExecuteResponse
 }
 var file_okk_proto_depIdxs = []int32{
-	2,  // 0: io.oxia.okk.proto.v1.Operation.assertion:type_name -> io.oxia.okk.proto.v1.Assertion
-	4,  // 1: io.oxia.okk.proto.v1.Operation.put:type_name -> io.oxia.okk.proto.v1.OperationPut
-	8,  // 2: io.oxia.okk.proto.v1.Operation.delete:type_name -> io.oxia.okk.proto.v1.OperationDelete
-	5,  // 3: io.oxia.okk.proto.v1.Operation.get:type_name -> io.oxia.okk.proto.v1.OperationGet
-	6,  // 4: io.oxia.okk.proto.v1.Operation.list:type_name -> io.oxia.okk.proto.v1.OperationList
-	7,  // 5: io.oxia.okk.proto.v1.Operation.scan:type_name -> io.oxia.okk.proto.v1.OperationScan
-	3,  // 6: io.oxia.okk.proto.v1.Operation.session_restart:type_name -> io.oxia.okk.proto.v1.OperationSessionRestart
-	1,  // 7: io.oxia.okk.proto.v1.ExecuteCommand.operation:type_name -> io.oxia.okk.proto.v1.Operation
-	0,  // 8: io.oxia.okk.proto.v1.ExecuteResponse.status:type_name -> io.oxia.okk.proto.v1.Status
-	9,  // 9: io.oxia.okk.proto.v1.Okk.Execute:input_type -> io.oxia.okk.proto.v1.ExecuteCommand
-	10, // 10: io.oxia.okk.proto.v1.Okk.Execute:output_type -> io.oxia.okk.proto.v1.ExecuteResponse
-	10, // [10:11] is the sub-list for method output_type
-	9,  // [9:10] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	12, // 0: io.oxia.okk.proto.v1.Operation.assertion:type_name -> io.oxia.okk.proto.v1.Assertion
+	10, // 1: io.oxia.okk.proto.v1.Operation.precondition:type_name -> io.oxia.okk.proto.v1.Precondition
+	3,  // 2: io.oxia.okk.proto.v1.Operation.put:type_name -> io.oxia.okk.proto.v1.OperationPut
+	7,  // 3: io.oxia.okk.proto.v1.Operation.delete:type_name -> io.oxia.okk.proto.v1.OperationDelete
+	4,  // 4: io.oxia.okk.proto.v1.Operation.get:type_name -> io.oxia.okk.proto.v1.OperationGet
+	5,  // 5: io.oxia.okk.proto.v1.Operation.list:type_name -> io.oxia.okk.proto.v1.OperationList
+	6,  // 6: io.oxia.okk.proto.v1.Operation.scan:type_name -> io.oxia.okk.proto.v1.OperationScan
+	2,  // 7: io.oxia.okk.proto.v1.Operation.session_restart:type_name -> io.oxia.okk.proto.v1.OperationSessionRestart
+	8,  // 8: io.oxia.okk.proto.v1.Operation.range_delete:type_name -> io.oxia.okk.proto.v1.OperationRangeDelete
+	0,  // 9: io.oxia.okk.proto.v1.Notification.type:type_name -> io.oxia.okk.proto.v1.NotificationType
+	11, // 10: io.oxia.okk.proto.v1.Assertion.notification:type_name -> io.oxia.okk.proto.v1.Notification
+	9,  // 11: io.oxia.okk.proto.v1.ExecuteCommand.operation:type_name -> io.oxia.okk.proto.v1.Operation
+	1,  // 12: io.oxia.okk.proto.v1.ExecuteResponse.status:type_name -> io.oxia.okk.proto.v1.Status
+	13, // 13: io.oxia.okk.proto.v1.Okk.Execute:input_type -> io.oxia.okk.proto.v1.ExecuteCommand
+	14, // 14: io.oxia.okk.proto.v1.Okk.Execute:output_type -> io.oxia.okk.proto.v1.ExecuteResponse
+	14, // [14:15] is the sub-list for method output_type
+	13, // [13:14] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_okk_proto_init() }
@@ -737,22 +1029,25 @@ func file_okk_proto_init() {
 	if File_okk_proto != nil {
 		return
 	}
-	file_okk_proto_msgTypes[0].OneofWrappers = []any{
+	file_okk_proto_msgTypes[7].OneofWrappers = []any{
 		(*Operation_Put)(nil),
 		(*Operation_Delete)(nil),
 		(*Operation_Get)(nil),
 		(*Operation_List)(nil),
 		(*Operation_Scan)(nil),
 		(*Operation_SessionRestart)(nil),
+		(*Operation_RangeDelete)(nil),
 	}
-	file_okk_proto_msgTypes[1].OneofWrappers = []any{}
+	file_okk_proto_msgTypes[8].OneofWrappers = []any{}
+	file_okk_proto_msgTypes[9].OneofWrappers = []any{}
+	file_okk_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_okk_proto_rawDesc), len(file_okk_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   10,
+			NumEnums:      2,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

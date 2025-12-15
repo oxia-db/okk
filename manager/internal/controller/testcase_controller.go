@@ -32,8 +32,8 @@ import (
 	v1 "github.com/oxia-io/okk/api/v1"
 )
 
-// TCMetadataEphemeralReconciler reconciles a TCMetadataEphemeral object
-type TCMetadataEphemeralReconciler struct {
+// TestCaseReconciler reconciles a TestCase object
+type TestCaseReconciler struct {
 	client.Client
 	Scheme      *runtime.Scheme
 	TaskManager *task.Manager
@@ -43,10 +43,10 @@ type TCMetadataEphemeralReconciler struct {
 // +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals/finalizers,verbs=update
 
-func (r *TCMetadataEphemeralReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *TestCaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := logf.FromContext(ctx)
 
-	tc := &v1.TCMetadataEphemeral{}
+	tc := &v1.TestCase{}
 	if err := r.Client.Get(ctx, req.NamespacedName, tc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -55,7 +55,21 @@ func (r *TCMetadataEphemeralReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 	if err := r.TaskManager.ApplyTask(tc.Name, v1.MakeWorkerServiceURL(tc.Name, tc.Namespace), func() generator.Generator {
-		return generator.NewMetadataEphemeralGenerator(&log, ctx, tc.Name, tc.Spec.Duration, tc.Spec.OpPerSec)
+		ops := 10
+		if tc.Spec.OpPerSec != nil && *tc.Spec.OpPerSec > 0 {
+			ops = *tc.Spec.OpPerSec
+		}
+		switch tc.Spec.Type {
+		case v1.TestCaseTypeBasicKv:
+		case v1.TestCaseTypeSecondaryIndex:
+		case v1.TestCaseTypeStreamingSequence:
+		case v1.TestCaseTypeMetadataWithNotification:
+			return generator.NewMetadataNotificationGenerator(&log, ctx, tc.Name, tc.Spec.Duration, ops)
+		case v1.TestCaseTypeMetadataWithEphemeral:
+			return generator.NewMetadataEphemeralGenerator(&log, ctx, tc.Name, tc.Spec.Duration, ops)
+		case v1.TestCaseTypeMetadataWithVersionId:
+
+		}
 	}); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -63,9 +77,9 @@ func (r *TCMetadataEphemeralReconciler) Reconcile(ctx context.Context, req ctrl.
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *TCMetadataEphemeralReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *TestCaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1.TCMetadataEphemeral{}).
+		For(&v1.TestCase{}).
 		Owns(&corev1.Service{}).
 		Owns(&appv1.Deployment{}).
 		Named("tcmetadataephemeral").

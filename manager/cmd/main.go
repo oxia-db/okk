@@ -221,12 +221,12 @@ func exec(cmd *cobra.Command, args []string) {
 		setupLog.Error(err, "unable to create controller", "controller", "OxiaCluster")
 		os.Exit(1)
 	}
-	if err := (&controller.TCMetadataEphemeralReconciler{
+	if err := (&controller.TestCaseReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
 		TaskManager: taskManager,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "TCMetadataEphemeral")
+		setupLog.Error(err, "unable to create controller", "controller", "TestCase")
 		os.Exit(1)
 	}
 	if err := (&controller.TCBasicKVReconciler{

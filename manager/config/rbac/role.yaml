@@ -54,11 +54,7 @@ rules:
   - core.oxia.io
   resources:
   - oxiaclusters
-  - tcbasickvs
-  - tcbasicsecondaryindices
   - tcmetadataephemerals
-  - tcmetadatanotifications
-  - tcstreamingsequences
   verbs:
   - create
   - delete
@@ -71,22 +67,14 @@ rules:
   - core.oxia.io
   resources:
   - oxiaclusters/finalizers
-  - tcbasickvs/finalizers
-  - tcbasicsecondaryindices/finalizers
   - tcmetadataephemerals/finalizers
-  - tcmetadatanotifications/finalizers
-  - tcstreamingsequences/finalizers
   verbs:
   - update
 - apiGroups:
   - core.oxia.io
   resources:
   - oxiaclusters/status
-  - tcbasickvs/status
-  - tcbasicsecondaryindices/status
   - tcmetadataephemerals/status
-  - tcmetadatanotifications/status
-  - tcstreamingsequences/status
   verbs:
   - get
   - patch
