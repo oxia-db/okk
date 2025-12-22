@@ -308,8 +308,8 @@ func (in *TestCase) DeepCopyObject() runtime.Object {
 func (in *TestCaseSpec) DeepCopyInto(out *TestCaseSpec) {
 	*out = *in
 	in.Worker.DeepCopyInto(&out.Worker)
-	if in.OpPerSec != nil {
-		in, out := &in.OpPerSec, &out.OpPerSec
+	if in.OpRate != nil {
+		in, out := &in.OpRate, &out.OpRate
 		*out = new(int)
 		**out = **in
 	}

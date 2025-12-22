@@ -55,20 +55,19 @@ func (r *TestCaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 	if err := r.TaskManager.ApplyTask(tc.Name, v1.MakeWorkerServiceURL(tc.Name, tc.Namespace), func() generator.Generator {
-		ops := 10
-		if tc.Spec.OpPerSec != nil && *tc.Spec.OpPerSec > 0 {
-			ops = *tc.Spec.OpPerSec
-		}
 		switch tc.Spec.Type {
 		case v1.TestCaseTypeBasicKv:
+			return generator.NewBasicKv(ctx, tc)
 		case v1.TestCaseTypeSecondaryIndex:
+			panic("not implemented")
 		case v1.TestCaseTypeStreamingSequence:
+			return generator.NewStreamingSequence(ctx, tc)
 		case v1.TestCaseTypeMetadataWithNotification:
-			return generator.NewMetadataNotificationGenerator(&log, ctx, tc.Name, tc.Spec.Duration, ops)
+			return generator.NewMetadataNotificationGenerator(ctx, tc)
 		case v1.TestCaseTypeMetadataWithEphemeral:
-			return generator.NewMetadataEphemeralGenerator(&log, ctx, tc.Name, tc.Spec.Duration, ops)
+			return generator.NewMetadataEphemeralGenerator(ctx, tc)
 		case v1.TestCaseTypeMetadataWithVersionId:
-
+			panic("not implemented")
 		}
 	}); err != nil {
 		return ctrl.Result{}, err

@@ -21,7 +21,7 @@ type TestCaseSpec struct {
 	//+kubebuilder:validation:Required
 	Worker Worker `json:"worker,omitempty"`
 
-	OpPerSec *int `json:"opPerSec,omitempty"`
+	OpRate *int `json:"opRate,omitempty"`
 
 	Duration *time.Duration `json:"duration,omitempty"`
 }
@@ -39,6 +39,22 @@ type TestCase struct {
 
 	Spec   TestCaseSpec   `json:"spec,omitempty"`
 	Status TestCaseStatus `json:"status,omitempty"`
+}
+
+func (tc *TestCase) Duration() *time.Duration {
+	var d = 10 * time.Minute
+	if tc.Spec.Duration != nil {
+		d = *tc.Spec.Duration
+	}
+	return &d
+}
+
+func (tc *TestCase) OpRate() int {
+	ops := 10
+	if tc.Spec.OpRate != nil && *tc.Spec.OpRate > 0 {
+		ops = *tc.Spec.OpRate
+	}
+	return ops
 }
 
 // +kubebuilder:object:root=true

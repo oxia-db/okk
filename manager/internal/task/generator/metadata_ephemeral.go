@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	v1 "github.com/oxia-io/okk/api/v1"
 	"github.com/oxia-io/okk/internal/proto"
 	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var _ Generator = &metadataEphemeral{}
@@ -98,20 +100,20 @@ func (m *metadataEphemeral) maybeResetCounter() bool {
 	return true
 }
 
-func NewMetadataEphemeralGenerator(logger *logr.Logger, ctx context.Context,
-	taskName string, duration *time.Duration, opPerSec int) Generator {
+func NewMetadataEphemeralGenerator(ctx context.Context, tc *v1.TestCase) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
-	namedLogger := logger.WithName("metadata-ephemeral-generator")
-	namedLogger.Info("Starting metadata ephemeral generator ", "task-name", taskName)
+	namedLogger := logf.FromContext(ctx).WithName("metadata-ephemeral-generator")
+	namedLogger.Info("Starting metadata ephemeral generator ", "task-name", tc.Name)
+
 	me := metadataEphemeral{
 		Logger:     &namedLogger,
 		Context:    currentContext,
 		CancelFunc: currentContextCanceled,
-		taskName:   taskName,
-		duration:   duration,
+		taskName:   tc.Name,
+		duration:   tc.Duration(),
 		startTime:  time.Now(),
 		sequence:   0,
-		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), opPerSec),
+		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
 	}
 	me.maybeResetCounter()
 	return &me

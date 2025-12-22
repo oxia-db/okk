@@ -162,12 +162,14 @@ func (*OperationSessionRestart) Descriptor() ([]byte, []int) {
 }
 
 type OperationPut struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value         []byte                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	Ephemeral     bool                   `protobuf:"varint,3,opt,name=ephemeral,proto3" json:"ephemeral,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Key              string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value            []byte                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Ephemeral        bool                   `protobuf:"varint,3,opt,name=ephemeral,proto3" json:"ephemeral,omitempty"`
+	PartitionKey     *string                `protobuf:"bytes,4,opt,name=partition_key,json=partitionKey,proto3,oneof" json:"partition_key,omitempty"`
+	SequenceKeyDelta []uint64               `protobuf:"varint,5,rep,packed,name=sequence_key_delta,json=sequenceKeyDelta,proto3" json:"sequence_key_delta,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *OperationPut) Reset() {
@@ -219,6 +221,20 @@ func (x *OperationPut) GetEphemeral() bool {
 		return x.Ephemeral
 	}
 	return false
+}
+
+func (x *OperationPut) GetPartitionKey() string {
+	if x != nil && x.PartitionKey != nil {
+		return *x.PartitionKey
+	}
+	return ""
+}
+
+func (x *OperationPut) GetSequenceKeyDelta() []uint64 {
+	if x != nil {
+		return x.SequenceKeyDelta
+	}
+	return nil
 }
 
 type OperationGet struct {
@@ -628,10 +644,11 @@ func (*Operation_SessionRestart) isOperation_Operation() {}
 func (*Operation_RangeDelete) isOperation_Operation() {}
 
 type Precondition struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	WatchNotification *bool                  `protobuf:"varint,1,opt,name=watch_notification,json=watchNotification,proto3,oneof" json:"watch_notification,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	WatchNotification      *bool                  `protobuf:"varint,1,opt,name=watch_notification,json=watchNotification,proto3,oneof" json:"watch_notification,omitempty"`
+	BypassIfAssertKeyExist *bool                  `protobuf:"varint,2,opt,name=bypass_if_assert_key_exist,json=bypassIfAssertKeyExist,proto3,oneof" json:"bypass_if_assert_key_exist,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Precondition) Reset() {
@@ -667,6 +684,13 @@ func (*Precondition) Descriptor() ([]byte, []int) {
 func (x *Precondition) GetWatchNotification() bool {
 	if x != nil && x.WatchNotification != nil {
 		return *x.WatchNotification
+	}
+	return false
+}
+
+func (x *Precondition) GetBypassIfAssertKeyExist() bool {
+	if x != nil && x.BypassIfAssertKeyExist != nil {
+		return *x.BypassIfAssertKeyExist
 	}
 	return false
 }
@@ -744,6 +768,7 @@ type Assertion struct {
 	Empty           *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
 	EventuallyEmpty *bool                  `protobuf:"varint,2,opt,name=eventually_empty,json=eventuallyEmpty,proto3,oneof" json:"eventually_empty,omitempty"`
 	Notification    *Notification          `protobuf:"bytes,3,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
+	Key             *string                `protobuf:"bytes,4,opt,name=key,proto3,oneof" json:"key,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -797,6 +822,13 @@ func (x *Assertion) GetNotification() *Notification {
 		return x.Notification
 	}
 	return nil
+}
+
+func (x *Assertion) GetKey() string {
+	if x != nil && x.Key != nil {
+		return *x.Key
+	}
+	return ""
 }
 
 type ExecuteCommand struct {
@@ -900,11 +932,14 @@ var File_okk_proto protoreflect.FileDescriptor
 const file_okk_proto_rawDesc = "" +
 	"\n" +
 	"\tokk.proto\x12\x14io.oxia.okk.proto.v1\"\x19\n" +
-	"\x17OperationSessionRestart\"T\n" +
+	"\x17OperationSessionRestart\"\xbe\x01\n" +
 	"\fOperationPut\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value\x12\x1c\n" +
-	"\tephemeral\x18\x03 \x01(\bR\tephemeral\"\x0e\n" +
+	"\tephemeral\x18\x03 \x01(\bR\tephemeral\x12(\n" +
+	"\rpartition_key\x18\x04 \x01(\tH\x00R\fpartitionKey\x88\x01\x01\x12,\n" +
+	"\x12sequence_key_delta\x18\x05 \x03(\x04R\x10sequenceKeyDeltaB\x10\n" +
+	"\x0e_partition_key\"\x0e\n" +
 	"\fOperationGet\"E\n" +
 	"\rOperationList\x12\x1b\n" +
 	"\tkey_start\x18\x01 \x01(\tR\bkeyStart\x12\x17\n" +
@@ -930,10 +965,12 @@ const file_okk_proto_rawDesc = "" +
 	"\toperationB\f\n" +
 	"\n" +
 	"_assertionB\x0f\n" +
-	"\r_precondition\"Y\n" +
+	"\r_precondition\"\xb9\x01\n" +
 	"\fPrecondition\x122\n" +
-	"\x12watch_notification\x18\x01 \x01(\bH\x00R\x11watchNotification\x88\x01\x01B\x15\n" +
-	"\x13_watch_notification\"\xc3\x01\n" +
+	"\x12watch_notification\x18\x01 \x01(\bH\x00R\x11watchNotification\x88\x01\x01\x12?\n" +
+	"\x1abypass_if_assert_key_exist\x18\x02 \x01(\bH\x01R\x16bypassIfAssertKeyExist\x88\x01\x01B\x15\n" +
+	"\x13_watch_notificationB\x1d\n" +
+	"\x1b_bypass_if_assert_key_exist\"\xc3\x01\n" +
 	"\fNotification\x12:\n" +
 	"\x04type\x18\x01 \x01(\x0e2&.io.oxia.okk.proto.v1.NotificationTypeR\x04type\x12\x15\n" +
 	"\x03key\x18\x02 \x01(\tH\x00R\x03key\x88\x01\x01\x12 \n" +
@@ -943,14 +980,16 @@ const file_okk_proto_rawDesc = "" +
 	"\n" +
 	"_key_startB\n" +
 	"\n" +
-	"\b_key_end\"\xd3\x01\n" +
+	"\b_key_end\"\xf2\x01\n" +
 	"\tAssertion\x12\x19\n" +
 	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12.\n" +
 	"\x10eventually_empty\x18\x02 \x01(\bH\x01R\x0feventuallyEmpty\x88\x01\x01\x12K\n" +
-	"\fnotification\x18\x03 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x02R\fnotification\x88\x01\x01B\b\n" +
+	"\fnotification\x18\x03 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x02R\fnotification\x88\x01\x01\x12\x15\n" +
+	"\x03key\x18\x04 \x01(\tH\x03R\x03key\x88\x01\x01B\b\n" +
 	"\x06_emptyB\x13\n" +
 	"\x11_eventually_emptyB\x0f\n" +
-	"\r_notification\"O\n" +
+	"\r_notificationB\x06\n" +
+	"\x04_key\"O\n" +
 	"\x0eExecuteCommand\x12=\n" +
 	"\toperation\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.OperationR\toperation\"h\n" +
 	"\x0fExecuteResponse\x124\n" +
@@ -1029,6 +1068,7 @@ func file_okk_proto_init() {
 	if File_okk_proto != nil {
 		return
 	}
+	file_okk_proto_msgTypes[1].OneofWrappers = []any{}
 	file_okk_proto_msgTypes[7].OneofWrappers = []any{
 		(*Operation_Put)(nil),
 		(*Operation_Delete)(nil),

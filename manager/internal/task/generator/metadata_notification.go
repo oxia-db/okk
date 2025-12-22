@@ -8,9 +8,11 @@ import (
 
 	"github.com/bits-and-blooms/bitset"
 	"github.com/go-logr/logr"
+	v1 "github.com/oxia-io/okk/api/v1"
 	"github.com/oxia-io/okk/internal/proto"
 	"golang.org/x/time/rate"
 	"k8s.io/utils/pointer"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var _ Generator = &metadataNotification{}
@@ -153,21 +155,20 @@ func (m *metadataNotification) executePut(uintFactor uint) *proto.Operation {
 	return operation
 }
 
-func NewMetadataNotificationGenerator(logger *logr.Logger, ctx context.Context,
-	taskName string, duration *time.Duration, opPerSec int) Generator {
+func NewMetadataNotificationGenerator(ctx context.Context, tc *v1.TestCase) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 
-	namedLogger := logger.WithName("metadata-notification-generator")
-	namedLogger.Info("Starting metadata notification generator ", "task-name", taskName)
+	namedLogger := logf.FromContext(ctx).WithName("metadata-notification-generator")
+	namedLogger.Info("Starting metadata notification generator ", "task-name", tc.Name)
 
 	return &metadataNotification{
 		Logger:     &namedLogger,
 		Context:    currentContext,
 		CancelFunc: currentContextCanceled,
-		taskName:   taskName,
-		duration:   duration,
+		taskName:   tc.Name,
+		duration:   tc.Duration(),
 		startTime:  time.Now(),
-		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), opPerSec),
+		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
 		rand:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
