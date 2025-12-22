@@ -47,7 +47,7 @@ func (b *basicKv) Next() (*proto.Operation, bool) {
 	return nil, false
 }
 
-func NewBasicKv(ctx context.Context, tc v1.TestCase) Generator {
+func NewBasicKv(ctx context.Context, tc *v1.TestCase) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 	namedLogger := logf.FromContext(ctx).WithName("basic-kv-generator")
 	namedLogger.Info("Starting basic kv generator ", "name", tc.Name)

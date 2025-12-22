@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 
+	v1 "github.com/oxia-io/okk/api/v1"
 	"github.com/oxia-io/okk/internal/resource/worker"
 	"github.com/oxia-io/okk/internal/task"
 	"github.com/oxia-io/okk/internal/task/generator"
@@ -27,9 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-
-	v1 "github.com/oxia-io/okk/api/v1"
 )
 
 // TestCaseReconciler reconciles a TestCase object
@@ -44,8 +42,6 @@ type TestCaseReconciler struct {
 // +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals/finalizers,verbs=update
 
 func (r *TestCaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := logf.FromContext(ctx)
-
 	tc := &v1.TestCase{}
 	if err := r.Client.Get(ctx, req.NamespacedName, tc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -68,6 +64,8 @@ func (r *TestCaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return generator.NewMetadataEphemeralGenerator(ctx, tc)
 		case v1.TestCaseTypeMetadataWithVersionId:
 			panic("not implemented")
+		default:
+			panic("not implemented")
 		}
 	}); err != nil {
 		return ctrl.Result{}, err
@@ -81,6 +79,6 @@ func (r *TestCaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1.TestCase{}).
 		Owns(&corev1.Service{}).
 		Owns(&appv1.Deployment{}).
-		Named("tcmetadataephemeral").
+		Named("testcase").
 		Complete(r)
 }

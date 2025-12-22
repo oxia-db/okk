@@ -67,7 +67,7 @@ func (s *streamingSequence) nextSequence() int64 {
 	return nextSequence
 }
 
-func NewStreamingSequence(ctx context.Context, tc v1.TestCase) Generator {
+func NewStreamingSequence(ctx context.Context, tc *v1.TestCase) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 	namedLogger := logf.FromContext(ctx).WithName("streaming-sequence-generator")
 	namedLogger.Info("Starting metadata notification generator ", "name", tc.Name)
