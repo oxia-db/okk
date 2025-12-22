@@ -17,7 +17,7 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: TestCase is the Schema for the tcmetadataephemerals API.
+        description: TestCase is the Schema for the testcase API.
         properties:
           apiVersion:
             description: |-
@@ -45,7 +45,7 @@ spec:
                   largest representable duration to approximately 290 years.
                 format: int64
                 type: integer
-              opPerSec:
+              opRate:
                 type: integer
               type:
                 type: string

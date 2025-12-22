@@ -77,55 +77,57 @@ func (t *task) run() error {
 	}
 
 	for {
-		if operation, hasNext := t.generator.Next(); hasNext {
-			err = backoff.RetryNotify(func() error {
-				startTime := time.Now()
-				if err := stream.Send(&proto.ExecuteCommand{
-					Operation: operation,
-				}); err != nil {
-					if errors.Is(err, io.EOF) {
-						return backoff.Permanent(errors.New("stream closed"))
-					}
-					return err
-				}
-				response, err := stream.Recv()
-				if err != nil {
-					if errors.Is(err, io.EOF) {
-						return backoff.Permanent(errors.New("stream closed"))
-					}
-					return err
-				}
-				status := response.Status
-				switch status {
-				case proto.Status_Ok:
-					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_Ok.String()).Observe(time.Since(startTime).Seconds())
-					return nil
-				case proto.Status_RetryableFailure:
-					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
-					return osserrors.Wrap(ErrRetryable, response.StatusInfo)
-				case proto.Status_NonRetryableFailure:
-					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_NonRetryableFailure.String()).Observe(time.Since(startTime).Seconds())
-					return backoff.Permanent(osserrors.Wrap(ErrNonRetryable, response.StatusInfo))
-				case proto.Status_AssertionFailure:
-					if IsEventually(operation.Assertion) {
-						operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
-						return osserrors.Wrap(ErrRetryable, response.StatusInfo)
-					}
-					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_AssertionFailure.String()).Observe(time.Since(startTime).Seconds())
-					return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
-				default:
-					operationLatencyHistogram.WithLabelValues(t.name, "Unknown").Observe(time.Since(startTime).Seconds())
-					return backoff.Permanent(errors.New("unknown status"))
-				}
-			}, backoff.NewExponentialBackOff(), func(err error, duration time.Duration) {
-				t.Error(err, "Send command failed.", "retry-after", duration)
-			})
-			if err != nil {
-				if errors.Is(err, ErrAssertionFailure) {
-					return backoff.Permanent(err)
+		operation, hasNext := t.generator.Next()
+		if !hasNext {
+			return nil
+		}
+		err = backoff.RetryNotify(func() error {
+			startTime := time.Now()
+			if err := stream.Send(&proto.ExecuteCommand{
+				Operation: operation,
+			}); err != nil {
+				if errors.Is(err, io.EOF) {
+					return backoff.Permanent(errors.New("stream closed"))
 				}
 				return err
 			}
+			response, err := stream.Recv()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					return backoff.Permanent(errors.New("stream closed"))
+				}
+				return err
+			}
+			status := response.Status
+			switch status {
+			case proto.Status_Ok:
+				operationLatencyHistogram.WithLabelValues(t.name, proto.Status_Ok.String()).Observe(time.Since(startTime).Seconds())
+				return nil
+			case proto.Status_RetryableFailure:
+				operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
+				return osserrors.Wrap(ErrRetryable, response.StatusInfo)
+			case proto.Status_NonRetryableFailure:
+				operationLatencyHistogram.WithLabelValues(t.name, proto.Status_NonRetryableFailure.String()).Observe(time.Since(startTime).Seconds())
+				return backoff.Permanent(osserrors.Wrap(ErrNonRetryable, response.StatusInfo))
+			case proto.Status_AssertionFailure:
+				if IsEventually(operation.Assertion) {
+					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
+					return osserrors.Wrap(ErrRetryable, response.StatusInfo)
+				}
+				operationLatencyHistogram.WithLabelValues(t.name, proto.Status_AssertionFailure.String()).Observe(time.Since(startTime).Seconds())
+				return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
+			default:
+				operationLatencyHistogram.WithLabelValues(t.name, "Unknown").Observe(time.Since(startTime).Seconds())
+				return backoff.Permanent(errors.New("unknown status"))
+			}
+		}, backoff.NewExponentialBackOff(), func(err error, duration time.Duration) {
+			t.Error(err, "Send command failed.", "retry-after", duration)
+		})
+		if err != nil {
+			if errors.Is(err, ErrAssertionFailure) {
+				return backoff.Permanent(err)
+			}
+			return err
 		}
 	}
 }

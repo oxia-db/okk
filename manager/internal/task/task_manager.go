@@ -33,7 +33,6 @@ func (m *Manager) ApplyTask(name string, worker string, generatorFactory func() 
 	newTask.Run()
 
 	m.tasks[name] = newTask
-	m.Info("Created new task", "name", name, "worker", worker, "generator", newGenerator)
 	return nil
 }
 

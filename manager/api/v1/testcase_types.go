@@ -24,6 +24,8 @@ type TestCaseSpec struct {
 	OpRate *int `json:"opRate,omitempty"`
 
 	Duration *time.Duration `json:"duration,omitempty"`
+
+	Properties map[string]string `json:"properties,omitempty"`
 }
 
 type TestCaseStatus struct {

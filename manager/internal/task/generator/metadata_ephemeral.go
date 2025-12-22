@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"math/rand/v2"
+	"strconv"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -13,6 +14,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const propertiesKeyCheckpointNum = "checkpointNum"
+
 var _ Generator = &metadataEphemeral{}
 
 type metadataEphemeral struct {
@@ -21,9 +24,10 @@ type metadataEphemeral struct {
 	context.CancelFunc
 	taskName string
 
-	duration  *time.Duration
-	rateLimit *rate.Limiter
-	startTime time.Time
+	duration      *time.Duration
+	checkpointNum uint
+	rateLimit     *rate.Limiter
+	startTime     time.Time
 
 	sequence       int64
 	counter        uint
@@ -96,7 +100,7 @@ func (m *metadataEphemeral) maybeResetCounter() bool {
 		return false
 	}
 	m.counter = 0
-	m.checkPoint = rand.UintN(120)
+	m.checkPoint = rand.UintN(m.checkpointNum)
 	return true
 }
 
@@ -105,15 +109,30 @@ func NewMetadataEphemeralGenerator(ctx context.Context, tc *v1.TestCase) Generat
 	namedLogger := logf.FromContext(ctx).WithName("metadata-ephemeral-generator")
 	namedLogger.Info("Starting metadata ephemeral generator ", "task-name", tc.Name)
 
+	spec := tc.Spec
+
+	checkpointNum := uint(1000)
+	if properties := spec.Properties; properties != nil {
+		if num, exist := properties[propertiesKeyCheckpointNum]; exist {
+			intVal, err := strconv.Atoi(num)
+			if err != nil {
+				namedLogger.Error(err, "Failed to convert property '%s' to int, fallback to the default value 1000", "checkpoint-num", num)
+			} else {
+				checkpointNum = uint(intVal)
+			}
+		}
+	}
+
 	me := metadataEphemeral{
-		Logger:     &namedLogger,
-		Context:    currentContext,
-		CancelFunc: currentContextCanceled,
-		taskName:   tc.Name,
-		duration:   tc.Duration(),
-		startTime:  time.Now(),
-		sequence:   0,
-		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
+		Logger:        &namedLogger,
+		Context:       currentContext,
+		CancelFunc:    currentContextCanceled,
+		taskName:      tc.Name,
+		checkpointNum: checkpointNum,
+		duration:      tc.Duration(),
+		startTime:     time.Now(),
+		sequence:      0,
+		rateLimit:     rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
 	}
 	me.maybeResetCounter()
 	return &me

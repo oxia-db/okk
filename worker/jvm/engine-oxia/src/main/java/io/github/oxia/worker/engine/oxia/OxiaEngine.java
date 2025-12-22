@@ -119,6 +119,7 @@ public class OxiaEngine implements Engine {
             case SCAN -> processScan(operation);
             case DELETE -> processDelete(operation);
             case SESSION_RESTART -> processSessionRestart(operation);
+            case RANGE_DELETE -> null;
             case OPERATION_NOT_SET -> {
                 log.error("Unsupported operation. operation={}", operation);
                 yield ExecuteResponse.newBuilder()

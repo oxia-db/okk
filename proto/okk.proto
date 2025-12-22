@@ -6,53 +6,70 @@ package io.oxia.okk.proto.v1;
 option go_package = "github.com/oxia-db/okk/proto";
 option java_multiple_files = true;
 
-message Operation {
-  int64 sequence = 1;
-  optional Assertion assertion = 2;
-  oneof operation  {
-    OperationPut put = 3;
-    OperationDelete delete = 4;
-    OperationGet get = 5;
-    OperationList list = 6;
-    OperationScan scan = 7;
-    OperationSessionRestart session_restart = 8;
-  }
-}
 
-message Assertion {
-  optional bool empty = 1;
-  optional bool eventually_empty = 2;
-}
-
-
-message OperationSessionRestart {
-
-}
-
+message OperationSessionRestart {}
 message OperationPut {
   string key = 1;
   bytes value = 2;
 
   bool ephemeral = 3;
+  optional string partition_key = 4;
+  repeated uint64 sequence_key_delta = 5;
 }
-
-message OperationGet {
-
-}
-
+message OperationGet {}
 message OperationList {
   string key_start = 1;
   string key_end = 2;
 }
-
-message OperationScan {
-
-}
-
+message OperationScan {}
 message OperationDelete {
-
+  string key = 1;
+}
+message OperationRangeDelete {
+  string key_start = 1;
+  string key_end = 2;
 }
 
+message Operation {
+  int64 sequence = 1;
+  optional Assertion assertion = 2;
+  optional Precondition precondition = 3;
+  oneof operation  {
+    OperationPut put = 4;
+    OperationDelete delete = 5;
+    OperationGet get = 6;
+    OperationList list = 7;
+    OperationScan scan = 8;
+    OperationSessionRestart session_restart = 9;
+    OperationRangeDelete range_delete = 10;
+  }
+}
+
+message Precondition {
+  optional bool watch_notification = 1;
+  optional bool bypass_if_assert_key_exist = 2;
+}
+
+enum NotificationType {
+  KEY_CREATED = 0;
+  KEY_MODIFIED = 1;
+  KEY_DELETED = 2;
+  KEY_RANGE_DELETED = 3;
+}
+
+message Notification {
+  NotificationType type = 1;
+  optional string key = 2;
+  optional string key_start = 3;
+  optional string key_end = 4;
+}
+
+message Assertion {
+  optional bool empty = 1;
+  optional bool eventually_empty = 2;
+  optional Notification notification = 3;
+  optional string key = 4;
+}
 
 message ExecuteCommand {
   Operation operation = 2;
