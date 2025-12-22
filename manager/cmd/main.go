@@ -229,34 +229,6 @@ func exec(cmd *cobra.Command, args []string) {
 		setupLog.Error(err, "unable to create controller", "controller", "TestCase")
 		os.Exit(1)
 	}
-	if err := (&controller.TCBasicKVReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "TCBasicKV")
-		os.Exit(1)
-	}
-	if err := (&controller.TCBasicSecondaryIndexReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "TCBasicSecondaryIndex")
-		os.Exit(1)
-	}
-	if err := (&controller.TCMetadataNotificationReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "TCMetadataNotification")
-		os.Exit(1)
-	}
-	if err := (&controller.TCStreamingSequenceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "TCStreamingSequence")
-		os.Exit(1)
-	}
 	// +kubebuilder:scaffold:builder
 
 	if metricsCertWatcher != nil {
