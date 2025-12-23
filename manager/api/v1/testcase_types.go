@@ -23,7 +23,7 @@ type TestCaseSpec struct {
 
 	OpRate *int `json:"opRate,omitempty"`
 
-	Duration *time.Duration `json:"duration,omitempty"`
+	Duration *metav1.Duration `json:"duration,omitempty"`
 
 	Properties map[string]string `json:"properties,omitempty"`
 }
@@ -46,7 +46,7 @@ type TestCase struct {
 func (tc *TestCase) Duration() *time.Duration {
 	var d = 10 * time.Minute
 	if tc.Spec.Duration != nil {
-		d = *tc.Spec.Duration
+		d = tc.Spec.Duration.Duration
 	}
 	return &d
 }

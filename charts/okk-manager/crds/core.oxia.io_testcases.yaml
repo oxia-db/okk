@@ -4,21 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: tcmetadataephemerals.core.oxia.io
+  name: testcases.core.oxia.io
 spec:
   group: core.oxia.io
   names:
-    kind: TCMetadataEphemeral
-    listKind: TCMetadataEphemeralList
-    plural: tcmetadataephemerals
-    singular: tcmetadataephemeral
+    kind: TestCase
+    listKind: TestCaseList
+    plural: testcases
+    singular: testcase
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: TCMetadataEphemeral is the Schema for the tcmetadataephemerals
-          API.
+        description: TestCase is the Schema for the testcase API.
         properties:
           apiVersion:
             description: |-
@@ -38,7 +37,6 @@ spec:
           metadata:
             type: object
           spec:
-            description: TCMetadataEphemeralSpec defines the desired state of TCMetadataEphemeral.
             properties:
               duration:
                 description: |-
@@ -47,6 +45,14 @@ spec:
                   largest representable duration to approximately 290 years.
                 format: int64
                 type: integer
+              opRate:
+                type: integer
+              properties:
+                additionalProperties:
+                  type: string
+                type: object
+              type:
+                type: string
               worker:
                 properties:
                   image:
@@ -126,10 +132,10 @@ spec:
                 - targetCluster
                 type: object
             required:
+            - type
             - worker
             type: object
           status:
-            description: TCMetadataEphemeralStatus defines the observed state of TCMetadataEphemeral.
             type: object
         type: object
     served: true

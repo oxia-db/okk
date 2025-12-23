@@ -1,11 +1,15 @@
 apiVersion: core.oxia.io/v1
-kind: TCMetadataEphemeral
+kind: TestCase
 metadata:
-  name: tc-jvm
-  namespace: okk-workload
+  name: tc-metadata-ephemeral-jvm
+  namespace: okk-system
 spec:
+  type: metadataWithEphemeral
+  duration:
+  properties:
+    checkpointNum: "1024"
   worker:
-    image: mattison/okk-jvm-worker
+    image: oxia/okk-jvm-worker
     targetCluster:
       name: okk
-      namespace: okk-workload
+      namespace: okk-system

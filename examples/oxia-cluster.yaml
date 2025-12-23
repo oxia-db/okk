@@ -2,7 +2,7 @@ apiVersion: core.oxia.io/v1
 kind: OxiaCluster
 metadata:
   name: okk
-  namespace: okk-workload
+  namespace: okk-system
 spec:
   image: oxia/oxia:latest
   coordinator:
