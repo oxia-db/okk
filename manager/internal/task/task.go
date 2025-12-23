@@ -110,10 +110,6 @@ func (t *task) run() error {
 				operationLatencyHistogram.WithLabelValues(t.name, proto.Status_NonRetryableFailure.String()).Observe(time.Since(startTime).Seconds())
 				return backoff.Permanent(osserrors.Wrap(ErrNonRetryable, response.StatusInfo))
 			case proto.Status_AssertionFailure:
-				if IsEventually(operation.Assertion) {
-					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
-					return osserrors.Wrap(ErrRetryable, response.StatusInfo)
-				}
 				operationLatencyHistogram.WithLabelValues(t.name, proto.Status_AssertionFailure.String()).Observe(time.Since(startTime).Seconds())
 				return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
 			default:

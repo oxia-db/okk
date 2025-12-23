@@ -35,7 +35,7 @@ func TestMetadataEphemeral(t *testing.T) {
 			Spec: okkv1.TestCaseSpec{
 				Type:     okkv1.TestCaseTypeMetadataWithEphemeral,
 				OpRate:   pointer.Int(100),
-				Duration: pointer.Duration(30 * time.Hour),
+				Duration: &metav1.Duration{Duration: 30 * time.Second},
 			},
 		})
 	})
