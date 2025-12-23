@@ -37,9 +37,9 @@ type TestCaseReconciler struct {
 	TaskManager *task.Manager
 }
 
-// +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core.oxia.io,resources=tcmetadataephemerals/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core.oxia.io,resources=testcases,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core.oxia.io,resources=testcases/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core.oxia.io,resources=testcases/finalizers,verbs=update
 
 func (r *TestCaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	tc := &v1.TestCase{}

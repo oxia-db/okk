@@ -54,7 +54,7 @@ rules:
   - core.oxia.io
   resources:
   - oxiaclusters
-  - tcmetadataephemerals
+  - testcases
   verbs:
   - create
   - delete
@@ -67,14 +67,14 @@ rules:
   - core.oxia.io
   resources:
   - oxiaclusters/finalizers
-  - tcmetadataephemerals/finalizers
+  - testcases/finalizers
   verbs:
   - update
 - apiGroups:
   - core.oxia.io
   resources:
   - oxiaclusters/status
-  - tcmetadataephemerals/status
+  - testcases/status
   verbs:
   - get
   - patch
