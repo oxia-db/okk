@@ -46,6 +46,9 @@ func (r *TestCaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if err := r.Client.Get(ctx, req.NamespacedName, tc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	if tc.DeletionTimestamp != nil {
+		return ctrl.Result{}, nil
+	}
 	wc := &tc.Spec.Worker
 	if err := worker.ApplyWorker(ctx, r.Client, tc, wc); err != nil {
 		return ctrl.Result{}, err

@@ -5,7 +5,7 @@ metadata:
   namespace: okk-system
 spec:
   type: metadataWithEphemeral
-  duration:
+  duration: "24h"
   properties:
     checkpointNum: "1024"
   worker:
