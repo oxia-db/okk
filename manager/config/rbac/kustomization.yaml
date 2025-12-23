@@ -22,21 +22,6 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the manager itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
-- tcstreamingsequence_admin_role.yaml
-- tcstreamingsequence_editor_role.yaml
-- tcstreamingsequence_viewer_role.yaml
-- tcmetadatanotification_admin_role.yaml
-- tcmetadatanotification_editor_role.yaml
-- tcmetadatanotification_viewer_role.yaml
-- tcbasicsecondaryindex_admin_role.yaml
-- tcbasicsecondaryindex_editor_role.yaml
-- tcbasicsecondaryindex_viewer_role.yaml
-- tcbasickv_admin_role.yaml
-- tcbasickv_editor_role.yaml
-- tcbasickv_viewer_role.yaml
-- tcmetadataephemeral_admin_role.yaml
-- tcmetadataephemeral_editor_role.yaml
-- tcmetadataephemeral_viewer_role.yaml
 - oxiacluster_admin_role.yaml
 - oxiacluster_editor_role.yaml
 - oxiacluster_viewer_role.yaml

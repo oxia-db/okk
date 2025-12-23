@@ -1,9 +1,2 @@
 ## Append samples of your project ##
-resources:
-- core_v1_oxiacluster.yaml
-- core_v1_tcmetadataephemeral.yaml
-- core_v1_tcbasickv.yaml
-- core_v1_tcbasicsecondaryindex.yaml
-- core_v1_tcmetadatanotification.yaml
-- core_v1_tcstreamingsequence.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
