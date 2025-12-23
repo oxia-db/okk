@@ -15,6 +15,7 @@ import (
 	osserrors "github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 var (
@@ -28,6 +29,10 @@ var (
 		Buckets: prometheus.ExponentialBuckets(0.001, 2, 16),
 	}, []string{"task_name", "status"})
 )
+
+func init() {
+	metrics.Registry.MustRegister(operationLatencyHistogram)
+}
 
 type Task interface {
 	io.Closer
