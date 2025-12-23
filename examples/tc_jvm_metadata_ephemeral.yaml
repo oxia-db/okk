@@ -9,7 +9,7 @@ spec:
   properties:
     checkpointNum: "1024"
   worker:
-    image: oxia/okk-jvm-worker
+    image: oxia/okk-jvm-worker:main
     targetCluster:
       name: okk
       namespace: okk-system
