@@ -764,13 +764,12 @@ func (x *Notification) GetKeyEnd() string {
 }
 
 type Assertion struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Empty           *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
-	EventuallyEmpty *bool                  `protobuf:"varint,2,opt,name=eventually_empty,json=eventuallyEmpty,proto3,oneof" json:"eventually_empty,omitempty"`
-	Notification    *Notification          `protobuf:"bytes,3,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
-	Key             *string                `protobuf:"bytes,4,opt,name=key,proto3,oneof" json:"key,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Empty         *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
+	Notification  *Notification          `protobuf:"bytes,2,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
+	Key           *string                `protobuf:"bytes,3,opt,name=key,proto3,oneof" json:"key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Assertion) Reset() {
@@ -806,13 +805,6 @@ func (*Assertion) Descriptor() ([]byte, []int) {
 func (x *Assertion) GetEmpty() bool {
 	if x != nil && x.Empty != nil {
 		return *x.Empty
-	}
-	return false
-}
-
-func (x *Assertion) GetEventuallyEmpty() bool {
-	if x != nil && x.EventuallyEmpty != nil {
-		return *x.EventuallyEmpty
 	}
 	return false
 }
@@ -980,14 +972,12 @@ const file_okk_proto_rawDesc = "" +
 	"\n" +
 	"_key_startB\n" +
 	"\n" +
-	"\b_key_end\"\xf2\x01\n" +
+	"\b_key_end\"\xad\x01\n" +
 	"\tAssertion\x12\x19\n" +
-	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12.\n" +
-	"\x10eventually_empty\x18\x02 \x01(\bH\x01R\x0feventuallyEmpty\x88\x01\x01\x12K\n" +
-	"\fnotification\x18\x03 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x02R\fnotification\x88\x01\x01\x12\x15\n" +
-	"\x03key\x18\x04 \x01(\tH\x03R\x03key\x88\x01\x01B\b\n" +
-	"\x06_emptyB\x13\n" +
-	"\x11_eventually_emptyB\x0f\n" +
+	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12K\n" +
+	"\fnotification\x18\x02 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x01R\fnotification\x88\x01\x01\x12\x15\n" +
+	"\x03key\x18\x03 \x01(\tH\x02R\x03key\x88\x01\x01B\b\n" +
+	"\x06_emptyB\x0f\n" +
 	"\r_notificationB\x06\n" +
 	"\x04_key\"O\n" +
 	"\x0eExecuteCommand\x12=\n" +

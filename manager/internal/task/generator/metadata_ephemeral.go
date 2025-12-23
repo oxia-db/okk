@@ -71,7 +71,7 @@ func (m *metadataEphemeral) Next() (*proto.Operation, bool) {
 	operation = &proto.Operation{
 		Sequence: m.nextSequence(),
 		Assertion: &proto.Assertion{
-			EventuallyEmpty: &assertEmpty,
+			Empty: &assertEmpty,
 		},
 		Operation: &proto.Operation_List{
 			List: &proto.OperationList{
@@ -107,7 +107,6 @@ func (m *metadataEphemeral) maybeResetCounter() bool {
 func NewMetadataEphemeralGenerator(ctx context.Context, tc *v1.TestCase) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 	namedLogger := logf.FromContext(ctx).WithName("metadata-ephemeral-generator")
-	namedLogger.Info("Starting metadata ephemeral generator ", "task-name", tc.Name)
 
 	spec := tc.Spec
 
@@ -122,6 +121,9 @@ func NewMetadataEphemeralGenerator(ctx context.Context, tc *v1.TestCase) Generat
 			}
 		}
 	}
+
+	namedLogger.Info("Starting metadata ephemeral generator ", "task-name", tc.Name,
+		"checkpoint-num", checkpointNum)
 
 	me := metadataEphemeral{
 		Logger:        &namedLogger,

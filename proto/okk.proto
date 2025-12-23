@@ -66,9 +66,8 @@ message Notification {
 
 message Assertion {
   optional bool empty = 1;
-  optional bool eventually_empty = 2;
-  optional Notification notification = 3;
-  optional string key = 4;
+  optional Notification notification = 2;
+  optional string key = 3;
 }
 
 message ExecuteCommand {
