@@ -119,7 +119,7 @@ func (t *task) run() error {
 				return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
 			default:
 				operationLatencyHistogram.WithLabelValues(t.name, "Unknown").Observe(time.Since(startTime).Seconds())
-				return backoff.Permanent(errors.New("unknown status"))
+				return errors.New("unknown status")
 			}
 		}, backoff.NewExponentialBackOff(), func(err error, duration time.Duration) {
 			t.Error(err, "Send command failed.", "retry-after", duration)
