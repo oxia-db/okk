@@ -33,7 +33,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: mattison/okk-jvm-worker
+          images: oxia/okk-jvm-worker
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -87,7 +87,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: mattison/okk-manager
+          images: oxia/okk-manager
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
