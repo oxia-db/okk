@@ -114,6 +114,7 @@ func applyDataServerStatefulSet(ctx context.Context, client client.Client, clust
 							"--log-json",
 							"--data-dir=/data/db",
 							"--wal-dir=/data/wal",
+							"--log-level=debug",
 						},
 						Resources: dataServerSpec.Resource,
 						Image:     cluster.GetImage(),
