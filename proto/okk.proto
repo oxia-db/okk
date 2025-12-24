@@ -68,6 +68,8 @@ message Assertion {
   optional bool empty = 1;
   optional Notification notification = 2;
   optional string key = 3;
+  optional bytes value = 4;
+  optional string partition_key = 5;
 }
 
 message ExecuteCommand {

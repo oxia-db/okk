@@ -768,6 +768,8 @@ type Assertion struct {
 	Empty         *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
 	Notification  *Notification          `protobuf:"bytes,2,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
 	Key           *string                `protobuf:"bytes,3,opt,name=key,proto3,oneof" json:"key,omitempty"`
+	Value         []byte                 `protobuf:"bytes,4,opt,name=value,proto3,oneof" json:"value,omitempty"`
+	PartitionKey  *string                `protobuf:"bytes,5,opt,name=partition_key,json=partitionKey,proto3,oneof" json:"partition_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -819,6 +821,20 @@ func (x *Assertion) GetNotification() *Notification {
 func (x *Assertion) GetKey() string {
 	if x != nil && x.Key != nil {
 		return *x.Key
+	}
+	return ""
+}
+
+func (x *Assertion) GetValue() []byte {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *Assertion) GetPartitionKey() string {
+	if x != nil && x.PartitionKey != nil {
+		return *x.PartitionKey
 	}
 	return ""
 }
@@ -972,14 +988,18 @@ const file_okk_proto_rawDesc = "" +
 	"\n" +
 	"_key_startB\n" +
 	"\n" +
-	"\b_key_end\"\xad\x01\n" +
+	"\b_key_end\"\x8e\x02\n" +
 	"\tAssertion\x12\x19\n" +
 	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12K\n" +
 	"\fnotification\x18\x02 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x01R\fnotification\x88\x01\x01\x12\x15\n" +
-	"\x03key\x18\x03 \x01(\tH\x02R\x03key\x88\x01\x01B\b\n" +
+	"\x03key\x18\x03 \x01(\tH\x02R\x03key\x88\x01\x01\x12\x19\n" +
+	"\x05value\x18\x04 \x01(\fH\x03R\x05value\x88\x01\x01\x12(\n" +
+	"\rpartition_key\x18\x05 \x01(\tH\x04R\fpartitionKey\x88\x01\x01B\b\n" +
 	"\x06_emptyB\x0f\n" +
 	"\r_notificationB\x06\n" +
-	"\x04_key\"O\n" +
+	"\x04_keyB\b\n" +
+	"\x06_valueB\x10\n" +
+	"\x0e_partition_key\"O\n" +
 	"\x0eExecuteCommand\x12=\n" +
 	"\toperation\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.OperationR\toperation\"h\n" +
 	"\x0fExecuteResponse\x124\n" +

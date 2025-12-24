@@ -2,19 +2,17 @@ package io.github.oxia.worker.engine.oxia;
 
 import io.github.oxia.okk.worker.engine.Engine;
 import io.oxia.client.api.AsyncOxiaClient;
+import io.oxia.client.api.GetResult;
 import io.oxia.client.api.OxiaClientBuilder;
+import io.oxia.client.api.PutResult;
 import io.oxia.client.api.options.PutOption;
 import io.oxia.client.api.options.defs.OptionEphemeral;
-import io.oxia.okk.proto.v1.Assertion;
-import io.oxia.okk.proto.v1.ExecuteCommand;
-import io.oxia.okk.proto.v1.ExecuteResponse;
-import io.oxia.okk.proto.v1.Operation;
-import io.oxia.okk.proto.v1.OperationList;
-import io.oxia.okk.proto.v1.OperationPut;
-import io.oxia.okk.proto.v1.Status;
+import io.oxia.client.api.options.defs.OptionPartitionKey;
+import io.oxia.okk.proto.v1.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -40,10 +38,64 @@ public class OxiaEngine implements Engine {
 
 
     private ExecuteResponse processPut(Operation operation) {
+        if (operation.hasPrecondition()) {
+            final Precondition precondition = operation.getPrecondition();
+            if (precondition.getBypassIfAssertKeyExist()) {
+                // Idempotent operations
+                if (operation.hasAssertion()) {
+                    final Assertion assertion = operation.getAssertion();
+                    final GetResult result = oxiaClient.get(assertion.getKey()).join();
+                    if (result != null) {
+                        // the key might be exists
+                        final String getKey = result.key();
+                        final byte[] getValue = result.value();
+                        if (getKey.equals(assertion.getKey())
+                                && Arrays.equals(getValue, assertion.getValue().toByteArray())) {
+                            log.info("[Put][{}] The precondition BypassIfAssertKeyExist is met.", operation.getSequence());
+                            return ExecuteResponse.newBuilder()
+                                    .setStatus(Status.Ok)
+                                    .build();
+                        } else {
+                            log.warn("[Put][{}] Assertion failure, mismatched key or value. expect: key={} vlaue={} actual: key={} value={}",
+                                    operation.getSequence(), assertion.getKey(), assertion.getValue(), getKey, getValue);
+                            return ExecuteResponse.newBuilder()
+                                    .setStatus(Status.AssertionFailure)
+                                    .setStatusInfo("mismatched key or value.")
+                                    .build();
+                        }
+                    }
+                }
+            }
+        }
+
         final OperationPut put = operation.getPut();
         final var optionSet = new HashSet<PutOption>();
-        optionSet.add(OptionEphemeral.AsEphemeralRecord);
-        oxiaClient.put(put.getKey(), put.getValue().toByteArray(), optionSet).join();
+        if (put.hasPartitionKey()) {
+            optionSet.add(PutOption.PartitionKey(put.getPartitionKey()));
+        }
+        if (put.getSequenceKeyDeltaCount() > 0) {
+            optionSet.add(PutOption.SequenceKeysDeltas(put.getSequenceKeyDeltaList()));
+        }
+        if (put.getEphemeral()) {
+            optionSet.add(OptionEphemeral.AsEphemeralRecord);
+        }
+        final PutResult result = oxiaClient.put(put.getKey(), put.getValue().toByteArray(), optionSet).join();
+
+        if (operation.hasAssertion()) {
+            final Assertion assertion = operation.getAssertion();
+            final String putKey = result.key();
+
+            final String expectKey = assertion.getKey();
+            if (!putKey.equals(expectKey)) {
+                log.warn("[Put][{}] Assertion failure, mismatched key. expect: key={} actual: key={}",
+                        operation.getSequence(), assertion.getKey(), putKey);
+                return ExecuteResponse.newBuilder()
+                        .setStatus(Status.AssertionFailure)
+                        .setStatusInfo("mismatched key.")
+                        .build();
+            }
+        }
+
         return ExecuteResponse.newBuilder()
                 .setStatus(Status.Ok)
                 .build();

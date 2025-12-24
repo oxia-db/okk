@@ -134,7 +134,7 @@ func NewMetadataEphemeralGenerator(ctx context.Context, tc *v1.TestCase) Generat
 		duration:      tc.Duration(),
 		startTime:     time.Now(),
 		sequence:      0,
-		rateLimit:     rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
+		rateLimit:     rate.NewLimiter(rate.Limit(tc.OpRate()), tc.OpRate()),
 	}
 	me.maybeResetCounter()
 	return &me

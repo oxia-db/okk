@@ -43,11 +43,18 @@ func (s *streamingSequence) Next() (*proto.Operation, bool) {
 		return nil, false
 	}
 	sequence := s.nextSequence()
+
+	b := make([]byte, 8)
+	if _, err := rand.Read(b); err != nil {
+		s.Error(err, "Failed to generate random sequence")
+		return nil, false
+	}
 	return &proto.Operation{
 		Sequence: sequence,
 		Operation: &proto.Operation_Put{
 			Put: &proto.OperationPut{
 				Key:              s.taskName,
+				Value:            b,
 				PartitionKey:     pointer.String(s.taskName),
 				SequenceKeyDelta: []uint64{1, 2, 3},
 			},
@@ -56,7 +63,9 @@ func (s *streamingSequence) Next() (*proto.Operation, bool) {
 			BypassIfAssertKeyExist: pointer.Bool(true),
 		},
 		Assertion: &proto.Assertion{
-			Key: pointer.String(fmt.Sprintf("%s-%020d-%020d-%020d", s.taskName, sequence+1, sequence+2, sequence+3)),
+			Key:          pointer.String(fmt.Sprintf("%s-%020d-%020d-%020d", s.taskName, sequence, sequence*2, sequence*3)),
+			Value:        b,
+			PartitionKey: pointer.String(s.taskName),
 		},
 	}, true
 }
@@ -70,16 +79,16 @@ func (s *streamingSequence) nextSequence() int64 {
 func NewStreamingSequence(ctx context.Context, tc *v1.TestCase) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 	namedLogger := logf.FromContext(ctx).WithName("streaming-sequence-generator")
-	namedLogger.Info("Starting metadata notification generator ", "name", tc.Name)
+	namedLogger.Info("Starting streaming sequence generator ", "name", tc.Name)
 
-	return &metadataNotification{
+	return &streamingSequence{
 		Logger:     &namedLogger,
 		Context:    currentContext,
 		CancelFunc: currentContextCanceled,
 		taskName:   tc.Name,
 		duration:   tc.Duration(),
 		startTime:  time.Now(),
-		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
-		rand:       rand.New(rand.NewSource(time.Now().UnixNano())),
+		rateLimit:  rate.NewLimiter(rate.Limit(tc.OpRate()), tc.OpRate()),
+		sequence:   1,
 	}
 }
