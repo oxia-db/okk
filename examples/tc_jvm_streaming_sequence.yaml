@@ -1,0 +1,13 @@
+apiVersion: core.oxia.io/v1
+kind: TestCase
+metadata:
+  name: tc-streaming-sequence-jvm
+  namespace: okk-system
+spec:
+  type: streamingSequence
+  duration: "24h"
+  worker:
+    image: oxia/okk-jvm-worker:main
+    targetCluster:
+      name: okk
+      namespace: okk-system

@@ -30,9 +30,9 @@ func (m *Manager) ApplyTask(name string, worker string, generatorFactory func() 
 
 	newGenerator := generatorFactory()
 	newTask := NewTask(m.Context, m.Logger, m.providerManager, name, newGenerator, worker)
-	newTask.Run()
-
 	m.tasks[name] = newTask
+
+	newTask.Run()
 	return nil
 }
 
