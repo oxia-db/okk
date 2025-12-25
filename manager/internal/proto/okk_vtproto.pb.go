@@ -161,6 +161,7 @@ func (m *Operation) CloneVT() *Operation {
 	r.Sequence = m.Sequence
 	r.Assertion = m.Assertion.CloneVT()
 	r.Precondition = m.Precondition.CloneVT()
+	r.Timestamp = m.Timestamp
 	if m.Operation != nil {
 		r.Operation = m.Operation.(interface{ CloneVT() isOperation_Operation }).CloneVT()
 	}
@@ -297,9 +298,9 @@ func (m *Assertion) CloneVT() *Assertion {
 	}
 	r := new(Assertion)
 	r.Notification = m.Notification.CloneVT()
-	if rhs := m.Empty; rhs != nil {
+	if rhs := m.EventuallyEmpty; rhs != nil {
 		tmpVal := *rhs
-		r.Empty = &tmpVal
+		r.EventuallyEmpty = &tmpVal
 	}
 	if rhs := m.Key; rhs != nil {
 		tmpVal := *rhs
@@ -533,6 +534,9 @@ func (this *Operation) EqualVT(that *Operation) bool {
 		return false
 	}
 	if !this.Precondition.EqualVT(that.Precondition) {
+		return false
+	}
+	if this.Timestamp != that.Timestamp {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -776,7 +780,7 @@ func (this *Assertion) EqualVT(that *Assertion) bool {
 	} else if this == nil || that == nil {
 		return false
 	}
-	if p, q := this.Empty, that.Empty; (p == nil && q != nil) || (p != nil && (q == nil || *p != *q)) {
+	if p, q := this.EventuallyEmpty, that.EventuallyEmpty; (p == nil && q != nil) || (p != nil && (q == nil || *p != *q)) {
 		return false
 	}
 	if !this.Notification.EqualVT(that.Notification) {
@@ -1198,6 +1202,13 @@ func (m *Operation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		}
 		i -= size
 	}
+	if m.Timestamp != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Timestamp))
+		i--
+		dAtA[i] = 0x6
+		i--
+		dAtA[i] = 0xa0
+	}
 	if m.Precondition != nil {
 		size, err := m.Precondition.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -1532,9 +1543,9 @@ func (m *Assertion) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.Empty != nil {
+	if m.EventuallyEmpty != nil {
 		i--
-		if *m.Empty {
+		if *m.EventuallyEmpty {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
@@ -1765,6 +1776,9 @@ func (m *Operation) SizeVT() (n int) {
 	if vtmsg, ok := m.Operation.(interface{ SizeVT() int }); ok {
 		n += vtmsg.SizeVT()
 	}
+	if m.Timestamp != 0 {
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.Timestamp))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -1900,7 +1914,7 @@ func (m *Assertion) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Empty != nil {
+	if m.EventuallyEmpty != nil {
 		n += 2
 	}
 	if m.Notification != nil {
@@ -3073,6 +3087,25 @@ func (m *Operation) UnmarshalVT(dAtA []byte) error {
 				m.Operation = &Operation_RangeDelete{RangeDelete: v}
 			}
 			iNdEx = postIndex
+		case 100:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
+			}
+			m.Timestamp = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Timestamp |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -3388,7 +3421,7 @@ func (m *Assertion) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Empty", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EventuallyEmpty", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -3406,7 +3439,7 @@ func (m *Assertion) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			b := bool(v != 0)
-			m.Empty = &b
+			m.EventuallyEmpty = &b
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Notification", wireType)
@@ -4898,6 +4931,25 @@ func (m *Operation) UnmarshalVTUnsafe(dAtA []byte) error {
 				m.Operation = &Operation_RangeDelete{RangeDelete: v}
 			}
 			iNdEx = postIndex
+		case 100:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Timestamp", wireType)
+			}
+			m.Timestamp = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Timestamp |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -5225,7 +5277,7 @@ func (m *Assertion) UnmarshalVTUnsafe(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Empty", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field EventuallyEmpty", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -5243,7 +5295,7 @@ func (m *Assertion) UnmarshalVTUnsafe(dAtA []byte) error {
 				}
 			}
 			b := bool(v != 0)
-			m.Empty = &b
+			m.EventuallyEmpty = &b
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Notification", wireType)

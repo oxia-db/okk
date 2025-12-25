@@ -125,6 +125,13 @@ func (t *task) run() error {
 					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_NonRetryableFailure.String()).Observe(time.Since(startTime).Seconds())
 					return backoff.Permanent(osserrors.Wrap(ErrNonRetryable, response.StatusInfo))
 				case proto.Status_AssertionFailure:
+					assertion := operation.Assertion
+					timestamp := operation.GetTimestamp()
+					if assertion != nil && assertion.GetEventuallyEmpty() &&
+						time.Since(time.Unix(0, timestamp)) < 5*time.Minute { // retry deadline 5 minutes
+						operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
+						return osserrors.Wrap(ErrRetryable, response.StatusInfo)
+					}
 					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_AssertionFailure.String()).Observe(time.Since(startTime).Seconds())
 					return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
 				default:

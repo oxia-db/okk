@@ -46,7 +46,8 @@ func (m *metadataEphemeral) Next() (*proto.Operation, bool) {
 	}
 	if !m.checkEphemeral && !m.maybeResetCounter() {
 		operation := &proto.Operation{
-			Sequence: m.nextSequence(),
+			Timestamp: time.Now().UnixNano(),
+			Sequence:  m.nextSequence(),
 			Operation: &proto.Operation_Put{
 				Put: &proto.OperationPut{
 					Key:       fmt.Sprintf("/ephemeral/%s/%d", m.taskName, m.counter),
@@ -59,7 +60,8 @@ func (m *metadataEphemeral) Next() (*proto.Operation, bool) {
 	var operation *proto.Operation
 	if !m.checkEphemeral {
 		operation = &proto.Operation{
-			Sequence: m.nextSequence(),
+			Timestamp: time.Now().UnixNano(),
+			Sequence:  m.nextSequence(),
 			Operation: &proto.Operation_SessionRestart{
 				SessionRestart: &proto.OperationSessionRestart{},
 			},
@@ -69,9 +71,10 @@ func (m *metadataEphemeral) Next() (*proto.Operation, bool) {
 	}
 	assertEmpty := true
 	operation = &proto.Operation{
-		Sequence: m.nextSequence(),
+		Timestamp: time.Now().UnixNano(),
+		Sequence:  m.nextSequence(),
 		Assertion: &proto.Assertion{
-			Empty: &assertEmpty,
+			EventuallyEmpty: &assertEmpty,
 		},
 		Operation: &proto.Operation_List{
 			List: &proto.OperationList{

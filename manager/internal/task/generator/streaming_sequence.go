@@ -50,7 +50,8 @@ func (s *streamingSequence) Next() (*proto.Operation, bool) {
 		return nil, false
 	}
 	return &proto.Operation{
-		Sequence: sequence,
+		Timestamp: time.Now().UnixNano(),
+		Sequence:  sequence,
 		Operation: &proto.Operation_Put{
 			Put: &proto.OperationPut{
 				Key:              s.taskName,

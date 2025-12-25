@@ -472,6 +472,7 @@ type Operation struct {
 	//	*Operation_SessionRestart
 	//	*Operation_RangeDelete
 	Operation     isOperation_Operation `protobuf_oneof:"operation"`
+	Timestamp     int64                 `protobuf:"varint,100,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -595,6 +596,13 @@ func (x *Operation) GetRangeDelete() *OperationRangeDelete {
 		}
 	}
 	return nil
+}
+
+func (x *Operation) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
 }
 
 type isOperation_Operation interface {
@@ -764,14 +772,14 @@ func (x *Notification) GetKeyEnd() string {
 }
 
 type Assertion struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Empty         *bool                  `protobuf:"varint,1,opt,name=empty,proto3,oneof" json:"empty,omitempty"`
-	Notification  *Notification          `protobuf:"bytes,2,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
-	Key           *string                `protobuf:"bytes,3,opt,name=key,proto3,oneof" json:"key,omitempty"`
-	Value         []byte                 `protobuf:"bytes,4,opt,name=value,proto3,oneof" json:"value,omitempty"`
-	PartitionKey  *string                `protobuf:"bytes,5,opt,name=partition_key,json=partitionKey,proto3,oneof" json:"partition_key,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	EventuallyEmpty *bool                  `protobuf:"varint,1,opt,name=eventually_empty,json=eventuallyEmpty,proto3,oneof" json:"eventually_empty,omitempty"`
+	Notification    *Notification          `protobuf:"bytes,2,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
+	Key             *string                `protobuf:"bytes,3,opt,name=key,proto3,oneof" json:"key,omitempty"`
+	Value           []byte                 `protobuf:"bytes,4,opt,name=value,proto3,oneof" json:"value,omitempty"`
+	PartitionKey    *string                `protobuf:"bytes,5,opt,name=partition_key,json=partitionKey,proto3,oneof" json:"partition_key,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Assertion) Reset() {
@@ -804,9 +812,9 @@ func (*Assertion) Descriptor() ([]byte, []int) {
 	return file_okk_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *Assertion) GetEmpty() bool {
-	if x != nil && x.Empty != nil {
-		return *x.Empty
+func (x *Assertion) GetEventuallyEmpty() bool {
+	if x != nil && x.EventuallyEmpty != nil {
+		return *x.EventuallyEmpty
 	}
 	return false
 }
@@ -957,7 +965,7 @@ const file_okk_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\"L\n" +
 	"\x14OperationRangeDelete\x12\x1b\n" +
 	"\tkey_start\x18\x01 \x01(\tR\bkeyStart\x12\x17\n" +
-	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"\xb6\x05\n" +
+	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"\xd4\x05\n" +
 	"\tOperation\x12\x1a\n" +
 	"\bsequence\x18\x01 \x01(\x03R\bsequence\x12B\n" +
 	"\tassertion\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.AssertionH\x01R\tassertion\x88\x01\x01\x12K\n" +
@@ -969,7 +977,8 @@ const file_okk_proto_rawDesc = "" +
 	"\x04scan\x18\b \x01(\v2#.io.oxia.okk.proto.v1.OperationScanH\x00R\x04scan\x12X\n" +
 	"\x0fsession_restart\x18\t \x01(\v2-.io.oxia.okk.proto.v1.OperationSessionRestartH\x00R\x0esessionRestart\x12O\n" +
 	"\frange_delete\x18\n" +
-	" \x01(\v2*.io.oxia.okk.proto.v1.OperationRangeDeleteH\x00R\vrangeDeleteB\v\n" +
+	" \x01(\v2*.io.oxia.okk.proto.v1.OperationRangeDeleteH\x00R\vrangeDelete\x12\x1c\n" +
+	"\ttimestamp\x18d \x01(\x03R\ttimestampB\v\n" +
 	"\toperationB\f\n" +
 	"\n" +
 	"_assertionB\x0f\n" +
@@ -988,14 +997,14 @@ const file_okk_proto_rawDesc = "" +
 	"\n" +
 	"_key_startB\n" +
 	"\n" +
-	"\b_key_end\"\x8e\x02\n" +
-	"\tAssertion\x12\x19\n" +
-	"\x05empty\x18\x01 \x01(\bH\x00R\x05empty\x88\x01\x01\x12K\n" +
+	"\b_key_end\"\xae\x02\n" +
+	"\tAssertion\x12.\n" +
+	"\x10eventually_empty\x18\x01 \x01(\bH\x00R\x0feventuallyEmpty\x88\x01\x01\x12K\n" +
 	"\fnotification\x18\x02 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x01R\fnotification\x88\x01\x01\x12\x15\n" +
 	"\x03key\x18\x03 \x01(\tH\x02R\x03key\x88\x01\x01\x12\x19\n" +
 	"\x05value\x18\x04 \x01(\fH\x03R\x05value\x88\x01\x01\x12(\n" +
-	"\rpartition_key\x18\x05 \x01(\tH\x04R\fpartitionKey\x88\x01\x01B\b\n" +
-	"\x06_emptyB\x0f\n" +
+	"\rpartition_key\x18\x05 \x01(\tH\x04R\fpartitionKey\x88\x01\x01B\x13\n" +
+	"\x11_eventually_emptyB\x0f\n" +
 	"\r_notificationB\x06\n" +
 	"\x04_keyB\b\n" +
 	"\x06_valueB\x10\n" +
