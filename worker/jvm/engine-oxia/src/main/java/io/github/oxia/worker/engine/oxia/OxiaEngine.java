@@ -119,7 +119,7 @@ public class OxiaEngine implements Engine {
         final Assertion assertion = operation.getAssertion();
         final OperationList listOp = operation.getList();
         final List<String> keys = oxiaClient.list(listOp.getKeyStart(), listOp.getKeyEnd()).join();
-        if (assertion.hasEmpty()) {
+        if (assertion.hasEventuallyEmpty()) {
             log.info("[List][{}] Check the empty assertion", operation.getSequence());
             if (!keys.isEmpty()) {
                 log.warn("[List][{}] Assertion failure", operation.getSequence());

@@ -43,6 +43,9 @@ message Operation {
     OperationSessionRestart session_restart = 9;
     OperationRangeDelete range_delete = 10;
   }
+
+
+  int64 timestamp = 100;
 }
 
 message Precondition {
@@ -65,7 +68,7 @@ message Notification {
 }
 
 message Assertion {
-  optional bool empty = 1;
+  optional bool eventually_empty = 1;
   optional Notification notification = 2;
   optional string key = 3;
   optional bytes value = 4;
