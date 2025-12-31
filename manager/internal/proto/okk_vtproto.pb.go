@@ -319,6 +319,10 @@ func (m *Assertion) CloneVT() *Assertion {
 		tmpVal := *rhs
 		r.PartitionKey = &tmpVal
 	}
+	if rhs := m.KeyNotFound; rhs != nil {
+		tmpVal := *rhs
+		r.KeyNotFound = &tmpVal
+	}
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -809,6 +813,9 @@ func (this *Assertion) EqualVT(that *Assertion) bool {
 		return false
 	}
 	if p, q := this.PartitionKey, that.PartitionKey; (p == nil && q != nil) || (p != nil && (q == nil || *p != *q)) {
+		return false
+	}
+	if p, q := this.KeyNotFound, that.KeyNotFound; (p == nil && q != nil) || (p != nil && (q == nil || *p != *q)) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -1554,6 +1561,16 @@ func (m *Assertion) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.KeyNotFound != nil {
+		i--
+		if *m.KeyNotFound {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
 	if m.PartitionKey != nil {
 		i -= len(*m.PartitionKey)
 		copy(dAtA[i:], *m.PartitionKey)
@@ -1989,6 +2006,9 @@ func (m *Assertion) SizeVT() (n int) {
 	if m.PartitionKey != nil {
 		l = len(*m.PartitionKey)
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.KeyNotFound != nil {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3748,6 +3768,27 @@ func (m *Assertion) UnmarshalVT(dAtA []byte) error {
 			s := string(dAtA[iNdEx:postIndex])
 			m.PartitionKey = &s
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyNotFound", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.KeyNotFound = &b
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -5736,6 +5777,27 @@ func (m *Assertion) UnmarshalVTUnsafe(dAtA []byte) error {
 			s := stringValue
 			m.PartitionKey = &s
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyNotFound", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.KeyNotFound = &b
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

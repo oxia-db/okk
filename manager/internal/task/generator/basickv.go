@@ -3,6 +3,7 @@ package generator
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
 	"github.com/cespare/xxhash/v2"
@@ -11,8 +12,11 @@ import (
 	"github.com/oxia-io/okk/internal/proto"
 	"golang.org/x/time/rate"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/utils/pointer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+const InvalidValue uint64 = -1
 
 var _ Generator = &basicKv{}
 
@@ -31,7 +35,7 @@ type basicKv struct {
 	sequence int64
 
 	initialized bool
-	data        map[int64]int32
+	data        map[int64]uint64
 }
 
 func (b *basicKv) Name() string {
@@ -52,23 +56,33 @@ func (b *basicKv) Next() (*proto.Operation, bool) {
 		return b.processInitStage()
 	}
 
-	action := b.actionGenerator.Next()
+	return b.processDataValidation()
+}
 
-	key := fmt.Sprintf("%s-%d", b.name, b.sequence)
+func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
+	action := b.actionGenerator.Next()
+	index := rand.Int64N(b.keySpace)
+
+	key := fmt.Sprintf("%s-%d", b.name, index)
 	switch action {
 	case OpPut:
 		{
+			value := []byte(uuid.NewUUID())
+			hash := xxhash.Sum64(value)
+			// cache data first
+			b.data[index] = hash
 			return &proto.Operation{
 				Operation: &proto.Operation_Put{
 					Put: &proto.OperationPut{
 						Key:   key,
-						Value: []byte(key),
+						Value: makeValue(b.name, hash),
 					},
 				},
 			}, true
 		}
 	case OpDelete:
 		{
+			b.data[index] = InvalidValue
 			return &proto.Operation{
 				Operation: &proto.Operation_Delete{
 					Delete: &proto.OperationDelete{
@@ -79,7 +93,18 @@ func (b *basicKv) Next() (*proto.Operation, bool) {
 		}
 	case OpGet:
 		{
+			hashValue := b.data[index]
+			assertion := &proto.Assertion{
+				KeyNotFound: pointer.Bool(true),
+			}
+			// expect we have kv
+			if hashValue != InvalidValue {
+				assertion.KeyNotFound = pointer.Bool(false)
+				assertion.Key = &key
+				assertion.Value = makeValue(b.name, hashValue)
+			}
 			return &proto.Operation{
+				Assertion: assertion,
 				Operation: &proto.Operation_Get{
 					Get: &proto.OperationGet{
 						Key:            key,
@@ -90,6 +115,16 @@ func (b *basicKv) Next() (*proto.Operation, bool) {
 		}
 	case OpGetFloor:
 		{
+			hashValue := b.data[index]
+			assertion := &proto.Assertion{
+				KeyNotFound: pointer.Bool(true),
+			}
+			// expect we have kv
+			if hashValue != InvalidValue {
+				assertion.KeyNotFound = pointer.Bool(false)
+				assertion.Key = &key
+				assertion.Value = makeValue(b.name, hashValue)
+			}
 			return &proto.Operation{
 				Operation: &proto.Operation_Get{
 					Get: &proto.OperationGet{
@@ -167,17 +202,16 @@ func (b *basicKv) Next() (*proto.Operation, bool) {
 			}, true
 		}
 	}
-
 	return nil, false
 }
 
 func (b *basicKv) processInitStage() (*proto.Operation, bool) {
 	sequence := b.nextSequence()
-	key := fmt.Sprintf("%s-%d", b.name, sequence)
+	key := makeKey(b.name, sequence)
 	value := []byte(uuid.NewUUID())
 	hash := xxhash.Sum64(value)
 	// cache data first
-	b.data[sequence] = int32(hash)
+	b.data[sequence] = hash
 	if sequence >= b.keySpace {
 		b.initialized = true
 	}
@@ -185,10 +219,36 @@ func (b *basicKv) processInitStage() (*proto.Operation, bool) {
 		Operation: &proto.Operation_Put{
 			Put: &proto.OperationPut{
 				Key:   key,
-				Value: value,
+				Value: makeValue(b.name, hash),
 			},
 		},
 	}, true
+}
+
+func makeKey(name string, index int64) string {
+	return fmt.Sprintf("%s-%20d", name, index)
+}
+
+func makeValue(name string, hash uint64) []byte {
+	return []byte(fmt.Sprintf("%s-%d", name, hash))
+}
+
+func equalsKey(name string, index int64) {
+
+}
+
+func floorKey(name string, index int64) (string, bool) {
+}
+
+func ceilingKey(name string, index int64) (string, bool) {
+}
+
+func higherKey(name string, index int64) (string, bool) {
+
+}
+
+func lowerKey(name string, index int64) (string, bool) {
+
 }
 
 func (b *basicKv) nextSequence() int64 {

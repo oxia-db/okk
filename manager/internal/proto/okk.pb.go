@@ -865,6 +865,7 @@ type Assertion struct {
 	Key             *string                `protobuf:"bytes,3,opt,name=key,proto3,oneof" json:"key,omitempty"`
 	Value           []byte                 `protobuf:"bytes,4,opt,name=value,proto3,oneof" json:"value,omitempty"`
 	PartitionKey    *string                `protobuf:"bytes,5,opt,name=partition_key,json=partitionKey,proto3,oneof" json:"partition_key,omitempty"`
+	KeyNotFound     *bool                  `protobuf:"varint,6,opt,name=key_not_found,json=keyNotFound,proto3,oneof" json:"key_not_found,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -932,6 +933,13 @@ func (x *Assertion) GetPartitionKey() string {
 		return *x.PartitionKey
 	}
 	return ""
+}
+
+func (x *Assertion) GetKeyNotFound() bool {
+	if x != nil && x.KeyNotFound != nil {
+		return *x.KeyNotFound
+	}
+	return false
 }
 
 type ExecuteCommand struct {
@@ -1088,18 +1096,20 @@ const file_okk_proto_rawDesc = "" +
 	"\n" +
 	"_key_startB\n" +
 	"\n" +
-	"\b_key_end\"\xae\x02\n" +
+	"\b_key_end\"\xe9\x02\n" +
 	"\tAssertion\x12.\n" +
 	"\x10eventually_empty\x18\x01 \x01(\bH\x00R\x0feventuallyEmpty\x88\x01\x01\x12K\n" +
 	"\fnotification\x18\x02 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x01R\fnotification\x88\x01\x01\x12\x15\n" +
 	"\x03key\x18\x03 \x01(\tH\x02R\x03key\x88\x01\x01\x12\x19\n" +
 	"\x05value\x18\x04 \x01(\fH\x03R\x05value\x88\x01\x01\x12(\n" +
-	"\rpartition_key\x18\x05 \x01(\tH\x04R\fpartitionKey\x88\x01\x01B\x13\n" +
+	"\rpartition_key\x18\x05 \x01(\tH\x04R\fpartitionKey\x88\x01\x01\x12'\n" +
+	"\rkey_not_found\x18\x06 \x01(\bH\x05R\vkeyNotFound\x88\x01\x01B\x13\n" +
 	"\x11_eventually_emptyB\x0f\n" +
 	"\r_notificationB\x06\n" +
 	"\x04_keyB\b\n" +
 	"\x06_valueB\x10\n" +
-	"\x0e_partition_key\"O\n" +
+	"\x0e_partition_keyB\x10\n" +
+	"\x0e_key_not_found\"O\n" +
 	"\x0eExecuteCommand\x12=\n" +
 	"\toperation\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.OperationR\toperation\"h\n" +
 	"\x0fExecuteResponse\x124\n" +

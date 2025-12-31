@@ -95,8 +95,8 @@ func (m *metadataNotification) executeDeleteRange() *proto.Operation {
 				KeyEnd:   pointer.String(fmt.Sprintf("/notification/%s//", m.taskName)),
 			},
 		},
-		Operation: &proto.Operation_RangeDelete{
-			RangeDelete: &proto.OperationRangeDelete{
+		Operation: &proto.Operation_DeleteRange{
+			DeleteRange: &proto.OperationDeleteRange{
 				KeyStart: fmt.Sprintf("/notification/%s/", m.taskName),
 				KeyEnd:   fmt.Sprintf("/notification/%s//", m.taskName),
 			},
