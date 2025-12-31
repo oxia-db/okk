@@ -73,6 +73,8 @@ func (m *OperationGet) CloneVT() *OperationGet {
 		return (*OperationGet)(nil)
 	}
 	r := new(OperationGet)
+	r.Key = m.Key
+	r.ComparisonType = m.ComparisonType
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -107,6 +109,8 @@ func (m *OperationScan) CloneVT() *OperationScan {
 		return (*OperationScan)(nil)
 	}
 	r := new(OperationScan)
+	r.KeyStart = m.KeyStart
+	r.KeyEnd = m.KeyEnd
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -135,11 +139,11 @@ func (m *OperationDelete) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
-func (m *OperationRangeDelete) CloneVT() *OperationRangeDelete {
+func (m *OperationDeleteRange) CloneVT() *OperationDeleteRange {
 	if m == nil {
-		return (*OperationRangeDelete)(nil)
+		return (*OperationDeleteRange)(nil)
 	}
-	r := new(OperationRangeDelete)
+	r := new(OperationDeleteRange)
 	r.KeyStart = m.KeyStart
 	r.KeyEnd = m.KeyEnd
 	if len(m.unknownFields) > 0 {
@@ -149,7 +153,7 @@ func (m *OperationRangeDelete) CloneVT() *OperationRangeDelete {
 	return r
 }
 
-func (m *OperationRangeDelete) CloneMessageVT() proto.Message {
+func (m *OperationDeleteRange) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
@@ -230,12 +234,12 @@ func (m *Operation_SessionRestart) CloneVT() isOperation_Operation {
 	return r
 }
 
-func (m *Operation_RangeDelete) CloneVT() isOperation_Operation {
+func (m *Operation_DeleteRange) CloneVT() isOperation_Operation {
 	if m == nil {
-		return (*Operation_RangeDelete)(nil)
+		return (*Operation_DeleteRange)(nil)
 	}
-	r := new(Operation_RangeDelete)
-	r.RangeDelete = m.RangeDelete.CloneVT()
+	r := new(Operation_DeleteRange)
+	r.DeleteRange = m.DeleteRange.CloneVT()
 	return r
 }
 
@@ -420,6 +424,12 @@ func (this *OperationGet) EqualVT(that *OperationGet) bool {
 	} else if this == nil || that == nil {
 		return false
 	}
+	if this.Key != that.Key {
+		return false
+	}
+	if this.ComparisonType != that.ComparisonType {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
@@ -458,6 +468,12 @@ func (this *OperationScan) EqualVT(that *OperationScan) bool {
 	} else if this == nil || that == nil {
 		return false
 	}
+	if this.KeyStart != that.KeyStart {
+		return false
+	}
+	if this.KeyEnd != that.KeyEnd {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
@@ -487,7 +503,7 @@ func (this *OperationDelete) EqualMessageVT(thatMsg proto.Message) bool {
 	}
 	return this.EqualVT(that)
 }
-func (this *OperationRangeDelete) EqualVT(that *OperationRangeDelete) bool {
+func (this *OperationDeleteRange) EqualVT(that *OperationDeleteRange) bool {
 	if this == that {
 		return true
 	} else if this == nil || that == nil {
@@ -502,8 +518,8 @@ func (this *OperationRangeDelete) EqualVT(that *OperationRangeDelete) bool {
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
-func (this *OperationRangeDelete) EqualMessageVT(thatMsg proto.Message) bool {
-	that, ok := thatMsg.(*OperationRangeDelete)
+func (this *OperationDeleteRange) EqualMessageVT(thatMsg proto.Message) bool {
+	that, ok := thatMsg.(*OperationDeleteRange)
 	if !ok {
 		return false
 	}
@@ -699,8 +715,8 @@ func (this *Operation_SessionRestart) EqualVT(thatIface isOperation_Operation) b
 	return true
 }
 
-func (this *Operation_RangeDelete) EqualVT(thatIface isOperation_Operation) bool {
-	that, ok := thatIface.(*Operation_RangeDelete)
+func (this *Operation_DeleteRange) EqualVT(thatIface isOperation_Operation) bool {
+	that, ok := thatIface.(*Operation_DeleteRange)
 	if !ok {
 		return false
 	}
@@ -710,12 +726,12 @@ func (this *Operation_RangeDelete) EqualVT(thatIface isOperation_Operation) bool
 	if this == nil && that != nil || this != nil && that == nil {
 		return false
 	}
-	if p, q := this.RangeDelete, that.RangeDelete; p != q {
+	if p, q := this.DeleteRange, that.DeleteRange; p != q {
 		if p == nil {
-			p = &OperationRangeDelete{}
+			p = &OperationDeleteRange{}
 		}
 		if q == nil {
-			q = &OperationRangeDelete{}
+			q = &OperationDeleteRange{}
 		}
 		if !p.EqualVT(q) {
 			return false
@@ -993,6 +1009,18 @@ func (m *OperationGet) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.ComparisonType != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.ComparisonType))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Key) > 0 {
+		i -= len(m.Key)
+		copy(dAtA[i:], m.Key)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Key)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1073,6 +1101,20 @@ func (m *OperationScan) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.KeyEnd) > 0 {
+		i -= len(m.KeyEnd)
+		copy(dAtA[i:], m.KeyEnd)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.KeyEnd)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.KeyStart) > 0 {
+		i -= len(m.KeyStart)
+		copy(dAtA[i:], m.KeyStart)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.KeyStart)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1116,7 +1158,7 @@ func (m *OperationDelete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *OperationRangeDelete) MarshalVT() (dAtA []byte, err error) {
+func (m *OperationDeleteRange) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1129,12 +1171,12 @@ func (m *OperationRangeDelete) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *OperationRangeDelete) MarshalToVT(dAtA []byte) (int, error) {
+func (m *OperationDeleteRange) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *OperationRangeDelete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *OperationDeleteRange) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1351,15 +1393,15 @@ func (m *Operation_SessionRestart) MarshalToSizedBufferVT(dAtA []byte) (int, err
 	}
 	return len(dAtA) - i, nil
 }
-func (m *Operation_RangeDelete) MarshalToVT(dAtA []byte) (int, error) {
+func (m *Operation_DeleteRange) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Operation_RangeDelete) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *Operation_DeleteRange) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.RangeDelete != nil {
-		size, err := m.RangeDelete.MarshalToSizedBufferVT(dAtA[:i])
+	if m.DeleteRange != nil {
+		size, err := m.DeleteRange.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1692,6 +1734,13 @@ func (m *OperationGet) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Key)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.ComparisonType != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.ComparisonType))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -1720,6 +1769,14 @@ func (m *OperationScan) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.KeyStart)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.KeyEnd)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -1738,7 +1795,7 @@ func (m *OperationDelete) SizeVT() (n int) {
 	return n
 }
 
-func (m *OperationRangeDelete) SizeVT() (n int) {
+func (m *OperationDeleteRange) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1855,14 +1912,14 @@ func (m *Operation_SessionRestart) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *Operation_RangeDelete) SizeVT() (n int) {
+func (m *Operation_DeleteRange) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.RangeDelete != nil {
-		l = m.RangeDelete.SizeVT()
+	if m.DeleteRange != nil {
+		l = m.DeleteRange.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	return n
@@ -2294,6 +2351,57 @@ func (m *OperationGet) UnmarshalVT(dAtA []byte) error {
 			return fmt.Errorf("proto: OperationGet: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Key = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ComparisonType", wireType)
+			}
+			m.ComparisonType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ComparisonType |= KeyComparisonType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -2460,6 +2568,70 @@ func (m *OperationScan) UnmarshalVT(dAtA []byte) error {
 			return fmt.Errorf("proto: OperationScan: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyStart", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.KeyStart = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyEnd", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.KeyEnd = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -2565,7 +2737,7 @@ func (m *OperationDelete) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *OperationRangeDelete) UnmarshalVT(dAtA []byte) error {
+func (m *OperationDeleteRange) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2588,10 +2760,10 @@ func (m *OperationRangeDelete) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OperationRangeDelete: wiretype end group for non-group")
+			return fmt.Errorf("proto: OperationDeleteRange: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OperationRangeDelete: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OperationDeleteRange: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3048,7 +3220,7 @@ func (m *Operation) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 10:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RangeDelete", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DeleteRange", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3075,16 +3247,16 @@ func (m *Operation) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Operation.(*Operation_RangeDelete); ok {
-				if err := oneof.RangeDelete.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.Operation.(*Operation_DeleteRange); ok {
+				if err := oneof.DeleteRange.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &OperationRangeDelete{}
+				v := &OperationDeleteRange{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Operation = &Operation_RangeDelete{RangeDelete: v}
+				m.Operation = &Operation_DeleteRange{DeleteRange: v}
 			}
 			iNdEx = postIndex
 		case 100:
@@ -4118,6 +4290,61 @@ func (m *OperationGet) UnmarshalVTUnsafe(dAtA []byte) error {
 			return fmt.Errorf("proto: OperationGet: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var stringValue string
+			if intStringLen > 0 {
+				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
+			}
+			m.Key = stringValue
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ComparisonType", wireType)
+			}
+			m.ComparisonType = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ComparisonType |= KeyComparisonType(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -4292,6 +4519,78 @@ func (m *OperationScan) UnmarshalVTUnsafe(dAtA []byte) error {
 			return fmt.Errorf("proto: OperationScan: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyStart", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var stringValue string
+			if intStringLen > 0 {
+				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
+			}
+			m.KeyStart = stringValue
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeyEnd", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var stringValue string
+			if intStringLen > 0 {
+				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
+			}
+			m.KeyEnd = stringValue
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -4401,7 +4700,7 @@ func (m *OperationDelete) UnmarshalVTUnsafe(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *OperationRangeDelete) UnmarshalVTUnsafe(dAtA []byte) error {
+func (m *OperationDeleteRange) UnmarshalVTUnsafe(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4424,10 +4723,10 @@ func (m *OperationRangeDelete) UnmarshalVTUnsafe(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: OperationRangeDelete: wiretype end group for non-group")
+			return fmt.Errorf("proto: OperationDeleteRange: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: OperationRangeDelete: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OperationDeleteRange: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4892,7 +5191,7 @@ func (m *Operation) UnmarshalVTUnsafe(dAtA []byte) error {
 			iNdEx = postIndex
 		case 10:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RangeDelete", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DeleteRange", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4919,16 +5218,16 @@ func (m *Operation) UnmarshalVTUnsafe(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Operation.(*Operation_RangeDelete); ok {
-				if err := oneof.RangeDelete.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
+			if oneof, ok := m.Operation.(*Operation_DeleteRange); ok {
+				if err := oneof.DeleteRange.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
 			} else {
-				v := &OperationRangeDelete{}
+				v := &OperationDeleteRange{}
 				if err := v.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Operation = &Operation_RangeDelete{RangeDelete: v}
+				m.Operation = &Operation_DeleteRange{DeleteRange: v}
 			}
 			iNdEx = postIndex
 		case 100:

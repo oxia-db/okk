@@ -21,6 +21,61 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type KeyComparisonType int32
+
+const (
+	KeyComparisonType_EQUAL   KeyComparisonType = 0
+	KeyComparisonType_FLOOR   KeyComparisonType = 1
+	KeyComparisonType_CEILING KeyComparisonType = 2
+	KeyComparisonType_LOWER   KeyComparisonType = 3
+	KeyComparisonType_HIGHER  KeyComparisonType = 4
+)
+
+// Enum value maps for KeyComparisonType.
+var (
+	KeyComparisonType_name = map[int32]string{
+		0: "EQUAL",
+		1: "FLOOR",
+		2: "CEILING",
+		3: "LOWER",
+		4: "HIGHER",
+	}
+	KeyComparisonType_value = map[string]int32{
+		"EQUAL":   0,
+		"FLOOR":   1,
+		"CEILING": 2,
+		"LOWER":   3,
+		"HIGHER":  4,
+	}
+)
+
+func (x KeyComparisonType) Enum() *KeyComparisonType {
+	p := new(KeyComparisonType)
+	*p = x
+	return p
+}
+
+func (x KeyComparisonType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (KeyComparisonType) Descriptor() protoreflect.EnumDescriptor {
+	return file_okk_proto_enumTypes[0].Descriptor()
+}
+
+func (KeyComparisonType) Type() protoreflect.EnumType {
+	return &file_okk_proto_enumTypes[0]
+}
+
+func (x KeyComparisonType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use KeyComparisonType.Descriptor instead.
+func (KeyComparisonType) EnumDescriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{0}
+}
+
 type NotificationType int32
 
 const (
@@ -57,11 +112,11 @@ func (x NotificationType) String() string {
 }
 
 func (NotificationType) Descriptor() protoreflect.EnumDescriptor {
-	return file_okk_proto_enumTypes[0].Descriptor()
+	return file_okk_proto_enumTypes[1].Descriptor()
 }
 
 func (NotificationType) Type() protoreflect.EnumType {
-	return &file_okk_proto_enumTypes[0]
+	return &file_okk_proto_enumTypes[1]
 }
 
 func (x NotificationType) Number() protoreflect.EnumNumber {
@@ -70,7 +125,7 @@ func (x NotificationType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NotificationType.Descriptor instead.
 func (NotificationType) EnumDescriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{0}
+	return file_okk_proto_rawDescGZIP(), []int{1}
 }
 
 type Status int32
@@ -109,11 +164,11 @@ func (x Status) String() string {
 }
 
 func (Status) Descriptor() protoreflect.EnumDescriptor {
-	return file_okk_proto_enumTypes[1].Descriptor()
+	return file_okk_proto_enumTypes[2].Descriptor()
 }
 
 func (Status) Type() protoreflect.EnumType {
-	return &file_okk_proto_enumTypes[1]
+	return &file_okk_proto_enumTypes[2]
 }
 
 func (x Status) Number() protoreflect.EnumNumber {
@@ -122,7 +177,7 @@ func (x Status) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Status.Descriptor instead.
 func (Status) EnumDescriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{1}
+	return file_okk_proto_rawDescGZIP(), []int{2}
 }
 
 type OperationSessionRestart struct {
@@ -238,9 +293,11 @@ func (x *OperationPut) GetSequenceKeyDelta() []uint64 {
 }
 
 type OperationGet struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Key            string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	ComparisonType KeyComparisonType      `protobuf:"varint,2,opt,name=comparison_type,json=comparisonType,proto3,enum=io.oxia.okk.proto.v1.KeyComparisonType" json:"comparison_type,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *OperationGet) Reset() {
@@ -271,6 +328,20 @@ func (x *OperationGet) ProtoReflect() protoreflect.Message {
 // Deprecated: Use OperationGet.ProtoReflect.Descriptor instead.
 func (*OperationGet) Descriptor() ([]byte, []int) {
 	return file_okk_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *OperationGet) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *OperationGet) GetComparisonType() KeyComparisonType {
+	if x != nil {
+		return x.ComparisonType
+	}
+	return KeyComparisonType_EQUAL
 }
 
 type OperationList struct {
@@ -327,6 +398,8 @@ func (x *OperationList) GetKeyEnd() string {
 
 type OperationScan struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	KeyStart      string                 `protobuf:"bytes,1,opt,name=key_start,json=keyStart,proto3" json:"key_start,omitempty"`
+	KeyEnd        string                 `protobuf:"bytes,2,opt,name=key_end,json=keyEnd,proto3" json:"key_end,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -359,6 +432,20 @@ func (x *OperationScan) ProtoReflect() protoreflect.Message {
 // Deprecated: Use OperationScan.ProtoReflect.Descriptor instead.
 func (*OperationScan) Descriptor() ([]byte, []int) {
 	return file_okk_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *OperationScan) GetKeyStart() string {
+	if x != nil {
+		return x.KeyStart
+	}
+	return ""
+}
+
+func (x *OperationScan) GetKeyEnd() string {
+	if x != nil {
+		return x.KeyEnd
+	}
+	return ""
 }
 
 type OperationDelete struct {
@@ -405,7 +492,7 @@ func (x *OperationDelete) GetKey() string {
 	return ""
 }
 
-type OperationRangeDelete struct {
+type OperationDeleteRange struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	KeyStart      string                 `protobuf:"bytes,1,opt,name=key_start,json=keyStart,proto3" json:"key_start,omitempty"`
 	KeyEnd        string                 `protobuf:"bytes,2,opt,name=key_end,json=keyEnd,proto3" json:"key_end,omitempty"`
@@ -413,20 +500,20 @@ type OperationRangeDelete struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *OperationRangeDelete) Reset() {
-	*x = OperationRangeDelete{}
+func (x *OperationDeleteRange) Reset() {
+	*x = OperationDeleteRange{}
 	mi := &file_okk_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *OperationRangeDelete) String() string {
+func (x *OperationDeleteRange) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*OperationRangeDelete) ProtoMessage() {}
+func (*OperationDeleteRange) ProtoMessage() {}
 
-func (x *OperationRangeDelete) ProtoReflect() protoreflect.Message {
+func (x *OperationDeleteRange) ProtoReflect() protoreflect.Message {
 	mi := &file_okk_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -438,19 +525,19 @@ func (x *OperationRangeDelete) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use OperationRangeDelete.ProtoReflect.Descriptor instead.
-func (*OperationRangeDelete) Descriptor() ([]byte, []int) {
+// Deprecated: Use OperationDeleteRange.ProtoReflect.Descriptor instead.
+func (*OperationDeleteRange) Descriptor() ([]byte, []int) {
 	return file_okk_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *OperationRangeDelete) GetKeyStart() string {
+func (x *OperationDeleteRange) GetKeyStart() string {
 	if x != nil {
 		return x.KeyStart
 	}
 	return ""
 }
 
-func (x *OperationRangeDelete) GetKeyEnd() string {
+func (x *OperationDeleteRange) GetKeyEnd() string {
 	if x != nil {
 		return x.KeyEnd
 	}
@@ -470,7 +557,7 @@ type Operation struct {
 	//	*Operation_List
 	//	*Operation_Scan
 	//	*Operation_SessionRestart
-	//	*Operation_RangeDelete
+	//	*Operation_DeleteRange
 	Operation     isOperation_Operation `protobuf_oneof:"operation"`
 	Timestamp     int64                 `protobuf:"varint,100,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -589,10 +676,10 @@ func (x *Operation) GetSessionRestart() *OperationSessionRestart {
 	return nil
 }
 
-func (x *Operation) GetRangeDelete() *OperationRangeDelete {
+func (x *Operation) GetDeleteRange() *OperationDeleteRange {
 	if x != nil {
-		if x, ok := x.Operation.(*Operation_RangeDelete); ok {
-			return x.RangeDelete
+		if x, ok := x.Operation.(*Operation_DeleteRange); ok {
+			return x.DeleteRange
 		}
 	}
 	return nil
@@ -633,8 +720,8 @@ type Operation_SessionRestart struct {
 	SessionRestart *OperationSessionRestart `protobuf:"bytes,9,opt,name=session_restart,json=sessionRestart,proto3,oneof"`
 }
 
-type Operation_RangeDelete struct {
-	RangeDelete *OperationRangeDelete `protobuf:"bytes,10,opt,name=range_delete,json=rangeDelete,proto3,oneof"`
+type Operation_DeleteRange struct {
+	DeleteRange *OperationDeleteRange `protobuf:"bytes,10,opt,name=delete_range,json=deleteRange,proto3,oneof"`
 }
 
 func (*Operation_Put) isOperation_Operation() {}
@@ -649,7 +736,7 @@ func (*Operation_Scan) isOperation_Operation() {}
 
 func (*Operation_SessionRestart) isOperation_Operation() {}
 
-func (*Operation_RangeDelete) isOperation_Operation() {}
+func (*Operation_DeleteRange) isOperation_Operation() {}
 
 type Precondition struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
@@ -955,15 +1042,19 @@ const file_okk_proto_rawDesc = "" +
 	"\tephemeral\x18\x03 \x01(\bR\tephemeral\x12(\n" +
 	"\rpartition_key\x18\x04 \x01(\tH\x00R\fpartitionKey\x88\x01\x01\x12,\n" +
 	"\x12sequence_key_delta\x18\x05 \x03(\x04R\x10sequenceKeyDeltaB\x10\n" +
-	"\x0e_partition_key\"\x0e\n" +
-	"\fOperationGet\"E\n" +
+	"\x0e_partition_key\"r\n" +
+	"\fOperationGet\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12P\n" +
+	"\x0fcomparison_type\x18\x02 \x01(\x0e2'.io.oxia.okk.proto.v1.KeyComparisonTypeR\x0ecomparisonType\"E\n" +
 	"\rOperationList\x12\x1b\n" +
 	"\tkey_start\x18\x01 \x01(\tR\bkeyStart\x12\x17\n" +
-	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"\x0f\n" +
-	"\rOperationScan\"#\n" +
+	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"E\n" +
+	"\rOperationScan\x12\x1b\n" +
+	"\tkey_start\x18\x01 \x01(\tR\bkeyStart\x12\x17\n" +
+	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"#\n" +
 	"\x0fOperationDelete\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\"L\n" +
-	"\x14OperationRangeDelete\x12\x1b\n" +
+	"\x14OperationDeleteRange\x12\x1b\n" +
 	"\tkey_start\x18\x01 \x01(\tR\bkeyStart\x12\x17\n" +
 	"\akey_end\x18\x02 \x01(\tR\x06keyEnd\"\xd4\x05\n" +
 	"\tOperation\x12\x1a\n" +
@@ -976,8 +1067,8 @@ const file_okk_proto_rawDesc = "" +
 	"\x04list\x18\a \x01(\v2#.io.oxia.okk.proto.v1.OperationListH\x00R\x04list\x129\n" +
 	"\x04scan\x18\b \x01(\v2#.io.oxia.okk.proto.v1.OperationScanH\x00R\x04scan\x12X\n" +
 	"\x0fsession_restart\x18\t \x01(\v2-.io.oxia.okk.proto.v1.OperationSessionRestartH\x00R\x0esessionRestart\x12O\n" +
-	"\frange_delete\x18\n" +
-	" \x01(\v2*.io.oxia.okk.proto.v1.OperationRangeDeleteH\x00R\vrangeDelete\x12\x1c\n" +
+	"\fdelete_range\x18\n" +
+	" \x01(\v2*.io.oxia.okk.proto.v1.OperationDeleteRangeH\x00R\vdeleteRange\x12\x1c\n" +
 	"\ttimestamp\x18d \x01(\x03R\ttimestampB\v\n" +
 	"\toperationB\f\n" +
 	"\n" +
@@ -1014,7 +1105,14 @@ const file_okk_proto_rawDesc = "" +
 	"\x0fExecuteResponse\x124\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1c.io.oxia.okk.proto.v1.StatusR\x06status\x12\x1f\n" +
 	"\vstatus_info\x18\x02 \x01(\tR\n" +
-	"statusInfo*]\n" +
+	"statusInfo*M\n" +
+	"\x11KeyComparisonType\x12\t\n" +
+	"\x05EQUAL\x10\x00\x12\t\n" +
+	"\x05FLOOR\x10\x01\x12\v\n" +
+	"\aCEILING\x10\x02\x12\t\n" +
+	"\x05LOWER\x10\x03\x12\n" +
+	"\n" +
+	"\x06HIGHER\x10\x04*]\n" +
 	"\x10NotificationType\x12\x0f\n" +
 	"\vKEY_CREATED\x10\x00\x12\x10\n" +
 	"\fKEY_MODIFIED\x10\x01\x12\x0f\n" +
@@ -1040,46 +1138,48 @@ func file_okk_proto_rawDescGZIP() []byte {
 	return file_okk_proto_rawDescData
 }
 
-var file_okk_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_okk_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_okk_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_okk_proto_goTypes = []any{
-	(NotificationType)(0),           // 0: io.oxia.okk.proto.v1.NotificationType
-	(Status)(0),                     // 1: io.oxia.okk.proto.v1.Status
-	(*OperationSessionRestart)(nil), // 2: io.oxia.okk.proto.v1.OperationSessionRestart
-	(*OperationPut)(nil),            // 3: io.oxia.okk.proto.v1.OperationPut
-	(*OperationGet)(nil),            // 4: io.oxia.okk.proto.v1.OperationGet
-	(*OperationList)(nil),           // 5: io.oxia.okk.proto.v1.OperationList
-	(*OperationScan)(nil),           // 6: io.oxia.okk.proto.v1.OperationScan
-	(*OperationDelete)(nil),         // 7: io.oxia.okk.proto.v1.OperationDelete
-	(*OperationRangeDelete)(nil),    // 8: io.oxia.okk.proto.v1.OperationRangeDelete
-	(*Operation)(nil),               // 9: io.oxia.okk.proto.v1.Operation
-	(*Precondition)(nil),            // 10: io.oxia.okk.proto.v1.Precondition
-	(*Notification)(nil),            // 11: io.oxia.okk.proto.v1.Notification
-	(*Assertion)(nil),               // 12: io.oxia.okk.proto.v1.Assertion
-	(*ExecuteCommand)(nil),          // 13: io.oxia.okk.proto.v1.ExecuteCommand
-	(*ExecuteResponse)(nil),         // 14: io.oxia.okk.proto.v1.ExecuteResponse
+	(KeyComparisonType)(0),          // 0: io.oxia.okk.proto.v1.KeyComparisonType
+	(NotificationType)(0),           // 1: io.oxia.okk.proto.v1.NotificationType
+	(Status)(0),                     // 2: io.oxia.okk.proto.v1.Status
+	(*OperationSessionRestart)(nil), // 3: io.oxia.okk.proto.v1.OperationSessionRestart
+	(*OperationPut)(nil),            // 4: io.oxia.okk.proto.v1.OperationPut
+	(*OperationGet)(nil),            // 5: io.oxia.okk.proto.v1.OperationGet
+	(*OperationList)(nil),           // 6: io.oxia.okk.proto.v1.OperationList
+	(*OperationScan)(nil),           // 7: io.oxia.okk.proto.v1.OperationScan
+	(*OperationDelete)(nil),         // 8: io.oxia.okk.proto.v1.OperationDelete
+	(*OperationDeleteRange)(nil),    // 9: io.oxia.okk.proto.v1.OperationDeleteRange
+	(*Operation)(nil),               // 10: io.oxia.okk.proto.v1.Operation
+	(*Precondition)(nil),            // 11: io.oxia.okk.proto.v1.Precondition
+	(*Notification)(nil),            // 12: io.oxia.okk.proto.v1.Notification
+	(*Assertion)(nil),               // 13: io.oxia.okk.proto.v1.Assertion
+	(*ExecuteCommand)(nil),          // 14: io.oxia.okk.proto.v1.ExecuteCommand
+	(*ExecuteResponse)(nil),         // 15: io.oxia.okk.proto.v1.ExecuteResponse
 }
 var file_okk_proto_depIdxs = []int32{
-	12, // 0: io.oxia.okk.proto.v1.Operation.assertion:type_name -> io.oxia.okk.proto.v1.Assertion
-	10, // 1: io.oxia.okk.proto.v1.Operation.precondition:type_name -> io.oxia.okk.proto.v1.Precondition
-	3,  // 2: io.oxia.okk.proto.v1.Operation.put:type_name -> io.oxia.okk.proto.v1.OperationPut
-	7,  // 3: io.oxia.okk.proto.v1.Operation.delete:type_name -> io.oxia.okk.proto.v1.OperationDelete
-	4,  // 4: io.oxia.okk.proto.v1.Operation.get:type_name -> io.oxia.okk.proto.v1.OperationGet
-	5,  // 5: io.oxia.okk.proto.v1.Operation.list:type_name -> io.oxia.okk.proto.v1.OperationList
-	6,  // 6: io.oxia.okk.proto.v1.Operation.scan:type_name -> io.oxia.okk.proto.v1.OperationScan
-	2,  // 7: io.oxia.okk.proto.v1.Operation.session_restart:type_name -> io.oxia.okk.proto.v1.OperationSessionRestart
-	8,  // 8: io.oxia.okk.proto.v1.Operation.range_delete:type_name -> io.oxia.okk.proto.v1.OperationRangeDelete
-	0,  // 9: io.oxia.okk.proto.v1.Notification.type:type_name -> io.oxia.okk.proto.v1.NotificationType
-	11, // 10: io.oxia.okk.proto.v1.Assertion.notification:type_name -> io.oxia.okk.proto.v1.Notification
-	9,  // 11: io.oxia.okk.proto.v1.ExecuteCommand.operation:type_name -> io.oxia.okk.proto.v1.Operation
-	1,  // 12: io.oxia.okk.proto.v1.ExecuteResponse.status:type_name -> io.oxia.okk.proto.v1.Status
-	13, // 13: io.oxia.okk.proto.v1.Okk.Execute:input_type -> io.oxia.okk.proto.v1.ExecuteCommand
-	14, // 14: io.oxia.okk.proto.v1.Okk.Execute:output_type -> io.oxia.okk.proto.v1.ExecuteResponse
-	14, // [14:15] is the sub-list for method output_type
-	13, // [13:14] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	0,  // 0: io.oxia.okk.proto.v1.OperationGet.comparison_type:type_name -> io.oxia.okk.proto.v1.KeyComparisonType
+	13, // 1: io.oxia.okk.proto.v1.Operation.assertion:type_name -> io.oxia.okk.proto.v1.Assertion
+	11, // 2: io.oxia.okk.proto.v1.Operation.precondition:type_name -> io.oxia.okk.proto.v1.Precondition
+	4,  // 3: io.oxia.okk.proto.v1.Operation.put:type_name -> io.oxia.okk.proto.v1.OperationPut
+	8,  // 4: io.oxia.okk.proto.v1.Operation.delete:type_name -> io.oxia.okk.proto.v1.OperationDelete
+	5,  // 5: io.oxia.okk.proto.v1.Operation.get:type_name -> io.oxia.okk.proto.v1.OperationGet
+	6,  // 6: io.oxia.okk.proto.v1.Operation.list:type_name -> io.oxia.okk.proto.v1.OperationList
+	7,  // 7: io.oxia.okk.proto.v1.Operation.scan:type_name -> io.oxia.okk.proto.v1.OperationScan
+	3,  // 8: io.oxia.okk.proto.v1.Operation.session_restart:type_name -> io.oxia.okk.proto.v1.OperationSessionRestart
+	9,  // 9: io.oxia.okk.proto.v1.Operation.delete_range:type_name -> io.oxia.okk.proto.v1.OperationDeleteRange
+	1,  // 10: io.oxia.okk.proto.v1.Notification.type:type_name -> io.oxia.okk.proto.v1.NotificationType
+	12, // 11: io.oxia.okk.proto.v1.Assertion.notification:type_name -> io.oxia.okk.proto.v1.Notification
+	10, // 12: io.oxia.okk.proto.v1.ExecuteCommand.operation:type_name -> io.oxia.okk.proto.v1.Operation
+	2,  // 13: io.oxia.okk.proto.v1.ExecuteResponse.status:type_name -> io.oxia.okk.proto.v1.Status
+	14, // 14: io.oxia.okk.proto.v1.Okk.Execute:input_type -> io.oxia.okk.proto.v1.ExecuteCommand
+	15, // 15: io.oxia.okk.proto.v1.Okk.Execute:output_type -> io.oxia.okk.proto.v1.ExecuteResponse
+	15, // [15:16] is the sub-list for method output_type
+	14, // [14:15] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_okk_proto_init() }
@@ -1095,7 +1195,7 @@ func file_okk_proto_init() {
 		(*Operation_List)(nil),
 		(*Operation_Scan)(nil),
 		(*Operation_SessionRestart)(nil),
-		(*Operation_RangeDelete)(nil),
+		(*Operation_DeleteRange)(nil),
 	}
 	file_okk_proto_msgTypes[8].OneofWrappers = []any{}
 	file_okk_proto_msgTypes[9].OneofWrappers = []any{}
@@ -1105,7 +1205,7 @@ func file_okk_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_okk_proto_rawDesc), len(file_okk_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,

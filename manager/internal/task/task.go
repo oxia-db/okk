@@ -85,6 +85,7 @@ func (t *task) run() error {
 	if err != nil {
 		return err
 	}
+	bo := backoff.NewExponentialBackOff()
 
 	for {
 		select {
@@ -116,6 +117,7 @@ func (t *task) run() error {
 				status := response.Status
 				switch status {
 				case proto.Status_Ok:
+					bo.Reset()
 					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_Ok.String()).Observe(time.Since(startTime).Seconds())
 					return nil
 				case proto.Status_RetryableFailure:
@@ -138,7 +140,7 @@ func (t *task) run() error {
 					operationLatencyHistogram.WithLabelValues(t.name, "Unknown").Observe(time.Since(startTime).Seconds())
 					return errors.New("unknown status")
 				}
-			}, backoff.NewExponentialBackOff(), func(err error, duration time.Duration) {
+			}, bo, func(err error, duration time.Duration) {
 				t.Error(err, "Send command failed.", "retry-after", duration)
 			})
 			if err != nil {
