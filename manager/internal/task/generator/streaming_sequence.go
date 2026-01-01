@@ -64,8 +64,12 @@ func (s *streamingSequence) Next() (*proto.Operation, bool) {
 			BypassIfAssertKeyExist: pointer.Bool(true),
 		},
 		Assertion: &proto.Assertion{
-			Key:          pointer.String(fmt.Sprintf("%s-%020d-%020d-%020d", s.taskName, sequence, sequence*2, sequence*3)),
-			Value:        b,
+			Records: []*proto.Record{
+				{
+					Key:   fmt.Sprintf("%s-%020d-%020d-%020d", s.taskName, sequence, sequence*2, sequence*3),
+					Value: b,
+				},
+			},
 			PartitionKey: pointer.String(s.taskName),
 		},
 	}, true

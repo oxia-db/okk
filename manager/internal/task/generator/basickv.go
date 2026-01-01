@@ -4,19 +4,18 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"strconv"
 	"time"
 
-	"github.com/cespare/xxhash/v2"
 	"github.com/go-logr/logr"
 	v1 "github.com/oxia-io/okk/api/v1"
 	"github.com/oxia-io/okk/internal/proto"
 	"golang.org/x/time/rate"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"k8s.io/utils/pointer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const InvalidValue uint64 = -1
+const propertiesKeyKeySpace = "keySpace"
 
 var _ Generator = &basicKv{}
 
@@ -35,7 +34,7 @@ type basicKv struct {
 	sequence int64
 
 	initialized bool
-	data        map[int64]uint64
+	data        *DataTree
 }
 
 func (b *basicKv) Name() string {
@@ -61,47 +60,63 @@ func (b *basicKv) Next() (*proto.Operation, bool) {
 
 func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
 	action := b.actionGenerator.Next()
-	index := rand.Int64N(b.keySpace)
-
-	key := fmt.Sprintf("%s-%d", b.name, index)
+	keyIndex := rand.Int64N(b.keySpace)
 	switch action {
 	case OpPut:
 		{
-			value := []byte(uuid.NewUUID())
-			hash := xxhash.Sum64(value)
-			// cache data first
-			b.data[index] = hash
+			uid := string(uuid.NewUUID())
+			b.data.Put(makeFormatInt64(keyIndex), uid)
 			return &proto.Operation{
 				Operation: &proto.Operation_Put{
 					Put: &proto.OperationPut{
-						Key:   key,
-						Value: makeValue(b.name, hash),
+						Key:   makeKey(b.name, keyIndex),
+						Value: makeValue(b.name, uid),
 					},
 				},
 			}, true
 		}
 	case OpDelete:
 		{
-			b.data[index] = InvalidValue
+			b.data.Delete(makeFormatInt64(keyIndex))
 			return &proto.Operation{
 				Operation: &proto.Operation_Delete{
 					Delete: &proto.OperationDelete{
-						Key: key,
+						Key: makeKey(b.name, keyIndex),
+					},
+				},
+			}, true
+		}
+	case OpDeleteRange:
+		{
+			keyStart := keyIndex
+			keyEnd := keyIndex + rand.Int64N(100)
+
+			b.data.DeleteRange(makeFormatInt64(keyStart), makeFormatInt64(keyEnd))
+			return &proto.Operation{
+				Operation: &proto.Operation_DeleteRange{
+					DeleteRange: &proto.OperationDeleteRange{
+						KeyStart: makeKey(b.name, keyStart),
+						KeyEnd:   makeKey(b.name, keyEnd),
 					},
 				},
 			}, true
 		}
 	case OpGet:
 		{
-			hashValue := b.data[index]
+			value, found := b.data.Get(makeFormatInt64(keyIndex))
+			key := makeKey(b.name, keyIndex)
+
+			emptyRecord := !found
 			assertion := &proto.Assertion{
-				KeyNotFound: pointer.Bool(true),
+				EmptyRecords: &emptyRecord,
 			}
-			// expect we have kv
-			if hashValue != InvalidValue {
-				assertion.KeyNotFound = pointer.Bool(false)
-				assertion.Key = &key
-				assertion.Value = makeValue(b.name, hashValue)
+			if found {
+				assertion.Records = []*proto.Record{
+					{
+						Key:   key,
+						Value: makeValue(b.name, value),
+					},
+				}
 			}
 			return &proto.Operation{
 				Assertion: assertion,
@@ -115,17 +130,23 @@ func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
 		}
 	case OpGetFloor:
 		{
-			hashValue := b.data[index]
+			entry, found := b.data.GetFloor(makeFormatInt64(keyIndex))
+			key := makeKey(b.name, keyIndex)
+
+			emptyRecord := !found
 			assertion := &proto.Assertion{
-				KeyNotFound: pointer.Bool(true),
+				EmptyRecords: &emptyRecord,
 			}
-			// expect we have kv
-			if hashValue != InvalidValue {
-				assertion.KeyNotFound = pointer.Bool(false)
-				assertion.Key = &key
-				assertion.Value = makeValue(b.name, hashValue)
+			if found {
+				assertion.Records = []*proto.Record{
+					{
+						Key:   makeKeyWithFormattedIndex(b.name, entry.Key),
+						Value: makeValue(b.name, entry.Value),
+					},
+				}
 			}
 			return &proto.Operation{
+				Assertion: assertion,
 				Operation: &proto.Operation_Get{
 					Get: &proto.OperationGet{
 						Key:            key,
@@ -136,7 +157,23 @@ func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
 		}
 	case OpGetCeiling:
 		{
+			entry, found := b.data.GetCeiling(makeFormatInt64(keyIndex))
+			key := makeKey(b.name, keyIndex)
+
+			emptyRecord := !found
+			assertion := &proto.Assertion{
+				EmptyRecords: &emptyRecord,
+			}
+			if found {
+				assertion.Records = []*proto.Record{
+					{
+						Key:   makeKeyWithFormattedIndex(b.name, entry.Key),
+						Value: makeValue(b.name, entry.Value),
+					},
+				}
+			}
 			return &proto.Operation{
+				Assertion: assertion,
 				Operation: &proto.Operation_Get{
 					Get: &proto.OperationGet{
 						Key:            key,
@@ -147,10 +184,25 @@ func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
 		}
 	case OpGetHigher:
 		{
+			entry, found := b.data.GetHigher(makeFormatInt64(keyIndex))
+
+			emptyRecord := !found
+			assertion := &proto.Assertion{
+				EmptyRecords: &emptyRecord,
+			}
+			if found {
+				assertion.Records = []*proto.Record{
+					{
+						Key:   makeKeyWithFormattedIndex(b.name, entry.Key),
+						Value: makeValue(b.name, entry.Value),
+					},
+				}
+			}
 			return &proto.Operation{
+				Assertion: assertion,
 				Operation: &proto.Operation_Get{
 					Get: &proto.OperationGet{
-						Key:            key,
+						Key:            makeKey(b.name, keyIndex),
 						ComparisonType: proto.KeyComparisonType_HIGHER,
 					},
 				},
@@ -158,10 +210,24 @@ func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
 		}
 	case OpGetLower:
 		{
+			entry, found := b.data.GetLower(makeFormatInt64(keyIndex))
+			emptyRecord := !found
+			assertion := &proto.Assertion{
+				EmptyRecords: &emptyRecord,
+			}
+			if found {
+				assertion.Records = []*proto.Record{
+					{
+						Key:   makeKeyWithFormattedIndex(b.name, entry.Key),
+						Value: makeValue(b.name, entry.Value),
+					},
+				}
+			}
 			return &proto.Operation{
+				Assertion: assertion,
 				Operation: &proto.Operation_Get{
 					Get: &proto.OperationGet{
-						Key:            key,
+						Key:            makeKey(b.name, keyIndex),
 						ComparisonType: proto.KeyComparisonType_LOWER,
 					},
 				},
@@ -169,34 +235,51 @@ func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
 		}
 	case OpList:
 		{
-			start := b.sequence
-			end := b.sequence + 100
+			keyStart := keyIndex
+			keyEnd := keyIndex + rand.Int64N(100)
+
+			keys := b.data.List(makeFormatInt64(keyStart), makeFormatInt64(keyEnd))
+			records := make([]*proto.Record, 0)
+			for _, key := range keys {
+				records = append(records, &proto.Record{
+					Key: makeKeyWithFormattedIndex(b.name, key),
+				})
+			}
+
 			return &proto.Operation{
+				Assertion: &proto.Assertion{
+					Records: records,
+				},
 				Operation: &proto.Operation_List{
 					List: &proto.OperationList{
-						KeyStart: fmt.Sprintf("%s-%d", b.name, start),
-						KeyEnd:   fmt.Sprintf("%s-%d", b.name, end),
+						KeyStart: makeKey(b.name, keyStart),
+						KeyEnd:   makeKey(b.name, keyEnd),
 					},
 				},
 			}, true
 		}
 	case OpScan:
 		{
+			keyStart := keyIndex
+			keyEnd := keyIndex + rand.Int64N(100)
+
+			entries := b.data.RangeScan(makeFormatInt64(keyStart), makeFormatInt64(keyEnd))
+			records := make([]*proto.Record, 0)
+			for _, entry := range entries {
+				records = append(records, &proto.Record{
+					Key:   makeKeyWithFormattedIndex(b.name, entry.Key),
+					Value: makeValue(b.name, entry.Value),
+				})
+			}
+
 			return &proto.Operation{
-				Operation: &proto.Operation_Scan{
-					Scan: &proto.OperationScan{},
+				Assertion: &proto.Assertion{
+					Records: records,
 				},
-			}, true
-		}
-	case OpDeleteRange:
-		{
-			start := b.sequence
-			end := b.sequence + 100
-			return &proto.Operation{
-				Operation: &proto.Operation_DeleteRange{
-					DeleteRange: &proto.OperationDeleteRange{
-						KeyStart: fmt.Sprintf("%s-%d", b.name, start),
-						KeyEnd:   fmt.Sprintf("%s-%d", b.name, end),
+				Operation: &proto.Operation_Scan{
+					Scan: &proto.OperationScan{
+						KeyStart: makeKey(b.name, keyStart),
+						KeyEnd:   makeKey(b.name, keyEnd),
 					},
 				},
 			}, true
@@ -207,48 +290,34 @@ func (b *basicKv) processDataValidation() (*proto.Operation, bool) {
 
 func (b *basicKv) processInitStage() (*proto.Operation, bool) {
 	sequence := b.nextSequence()
-	key := makeKey(b.name, sequence)
-	value := []byte(uuid.NewUUID())
-	hash := xxhash.Sum64(value)
 	// cache data first
-	b.data[sequence] = hash
+	data := string(uuid.NewUUID())
+	b.data.Put(makeFormatInt64(sequence), data)
+
 	if sequence >= b.keySpace {
 		b.initialized = true
 	}
 	return &proto.Operation{
 		Operation: &proto.Operation_Put{
 			Put: &proto.OperationPut{
-				Key:   key,
-				Value: makeValue(b.name, hash),
+				Key:   makeKey(b.name, sequence),
+				Value: makeValue(b.name, data),
 			},
 		},
 	}, true
 }
-
+func makeFormatInt64(value int64) string {
+	return fmt.Sprintf("%020d", value)
+}
+func makeKeyWithFormattedIndex(name string, index string) string {
+	return fmt.Sprintf("%s-%s", name, index)
+}
 func makeKey(name string, index int64) string {
-	return fmt.Sprintf("%s-%20d", name, index)
+	return fmt.Sprintf("%s-%020d", name, index)
 }
 
-func makeValue(name string, hash uint64) []byte {
-	return []byte(fmt.Sprintf("%s-%d", name, hash))
-}
-
-func equalsKey(name string, index int64) {
-
-}
-
-func floorKey(name string, index int64) (string, bool) {
-}
-
-func ceilingKey(name string, index int64) (string, bool) {
-}
-
-func higherKey(name string, index int64) (string, bool) {
-
-}
-
-func lowerKey(name string, index int64) (string, bool) {
-
+func makeValue(name string, uid string) []byte {
+	return []byte(fmt.Sprintf("%s-%s", name, uid))
 }
 
 func (b *basicKv) nextSequence() int64 {
@@ -260,6 +329,18 @@ func NewBasicKv(ctx context.Context, tc *v1.TestCase) Generator {
 	currentContext, currentContextCanceled := context.WithCancel(ctx)
 	namedLogger := logf.FromContext(ctx).WithName("basic-kv-generator")
 	namedLogger.Info("Starting basic kv generator ", "name", tc.Name)
+
+	keySpace := int64(1000)
+	if properties := tc.Spec.Properties; properties != nil {
+		if num, exist := properties[propertiesKeyKeySpace]; exist {
+			intVal, err := strconv.ParseInt(num, 10, 64)
+			if err != nil {
+				namedLogger.Error(err, "Failed to convert property '%s' to int, fallback to the default value 1000", "key-space", num)
+			} else {
+				keySpace = intVal
+			}
+		}
+	}
 
 	actionGenerator := NewActionGenerator(map[OpType]int{
 		OpPut:         10,
@@ -283,7 +364,9 @@ func NewBasicKv(ctx context.Context, tc *v1.TestCase) Generator {
 		startTime:       time.Now(),
 		sequence:        0,
 		initialized:     false,
-		rateLimit:       rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
+		keySpace:        keySpace,
+		rateLimit:       rate.NewLimiter(rate.Limit(tc.OpRate()), tc.OpRate()),
+		data:            NewDataTree(),
 	}
 	return &bkv
 }

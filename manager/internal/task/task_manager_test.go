@@ -61,3 +61,24 @@ func TestStreamingSequence(t *testing.T) {
 	})
 	assert.NoError(t, err)
 }
+
+func TestBasicKV(t *testing.T) {
+	ctx := logf.IntoContext(t.Context(), testLog)
+	taskManager := NewManager(ctx)
+	taskName := fmt.Sprintf("basic-kv-%d", time.Now().UnixNano())
+
+	err := taskManager.ApplyTask(taskName, "localhost:6666", func() generator.Generator {
+		return generator.NewBasicKv(ctx, &okkv1.TestCase{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: taskName,
+			},
+			Spec: okkv1.TestCaseSpec{
+				Type:     okkv1.TestCaseTypeBasicKv,
+				OpRate:   pointer.Int(1000),
+				Duration: &metav1.Duration{Duration: 30 * time.Minute},
+			},
+		})
+	})
+	assert.NoError(t, err)
+	taskManager.WaitTask(taskName)
+}

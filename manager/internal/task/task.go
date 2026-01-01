@@ -38,6 +38,8 @@ type Task interface {
 	io.Closer
 
 	Run()
+
+	Wait()
 }
 
 var _ Task = &task{}
@@ -100,6 +102,7 @@ func (t *task) run() error {
 			err = backoff.RetryNotify(func() error {
 				startTime := time.Now()
 				if err := stream.Send(&proto.ExecuteCommand{
+					Testcase:  t.name,
 					Operation: operation,
 				}); err != nil {
 					if errors.Is(err, io.EOF) {

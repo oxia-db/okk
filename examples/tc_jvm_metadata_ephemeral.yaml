@@ -1,7 +1,7 @@
 apiVersion: core.oxia.io/v1
 kind: TestCase
 metadata:
-  name: tc-metadata-ephemeral-jvm
+  name: tc-metadata-ephemeral-jvm-0
   namespace: okk-system
 spec:
   type: metadataWithEphemeral

@@ -36,6 +36,17 @@ func (m *Manager) ApplyTask(name string, worker string, generatorFactory func() 
 	return nil
 }
 
+func (m *Manager) WaitTask(name string) bool {
+	m.Lock()
+	t := m.tasks[name]
+	m.Unlock()
+	if t == nil {
+		return false
+	}
+	t.Wait()
+	return true
+}
+
 func NewManager(ctx context.Context) *Manager {
 	log := logf.FromContext(ctx)
 	currentContext, currentContextCancel := context.WithCancel(ctx)

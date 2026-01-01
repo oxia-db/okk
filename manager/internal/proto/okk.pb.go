@@ -858,21 +858,72 @@ func (x *Notification) GetKeyEnd() string {
 	return ""
 }
 
+type Record struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value         []byte                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Record) Reset() {
+	*x = Record{}
+	mi := &file_okk_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Record) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Record) ProtoMessage() {}
+
+func (x *Record) ProtoReflect() protoreflect.Message {
+	mi := &file_okk_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Record.ProtoReflect.Descriptor instead.
+func (*Record) Descriptor() ([]byte, []int) {
+	return file_okk_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Record) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *Record) GetValue() []byte {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
 type Assertion struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	EventuallyEmpty *bool                  `protobuf:"varint,1,opt,name=eventually_empty,json=eventuallyEmpty,proto3,oneof" json:"eventually_empty,omitempty"`
-	Notification    *Notification          `protobuf:"bytes,2,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
-	Key             *string                `protobuf:"bytes,3,opt,name=key,proto3,oneof" json:"key,omitempty"`
-	Value           []byte                 `protobuf:"bytes,4,opt,name=value,proto3,oneof" json:"value,omitempty"`
-	PartitionKey    *string                `protobuf:"bytes,5,opt,name=partition_key,json=partitionKey,proto3,oneof" json:"partition_key,omitempty"`
-	KeyNotFound     *bool                  `protobuf:"varint,6,opt,name=key_not_found,json=keyNotFound,proto3,oneof" json:"key_not_found,omitempty"`
+	EmptyRecords    *bool                  `protobuf:"varint,2,opt,name=empty_records,json=emptyRecords,proto3,oneof" json:"empty_records,omitempty"`
+	PartitionKey    *string                `protobuf:"bytes,3,opt,name=partition_key,json=partitionKey,proto3,oneof" json:"partition_key,omitempty"`
+	Records         []*Record              `protobuf:"bytes,4,rep,name=records,proto3" json:"records,omitempty"`
+	Notification    *Notification          `protobuf:"bytes,5,opt,name=notification,proto3,oneof" json:"notification,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Assertion) Reset() {
 	*x = Assertion{}
-	mi := &file_okk_proto_msgTypes[10]
+	mi := &file_okk_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -884,7 +935,7 @@ func (x *Assertion) String() string {
 func (*Assertion) ProtoMessage() {}
 
 func (x *Assertion) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[10]
+	mi := &file_okk_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -897,7 +948,7 @@ func (x *Assertion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Assertion.ProtoReflect.Descriptor instead.
 func (*Assertion) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{10}
+	return file_okk_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Assertion) GetEventuallyEmpty() bool {
@@ -907,25 +958,11 @@ func (x *Assertion) GetEventuallyEmpty() bool {
 	return false
 }
 
-func (x *Assertion) GetNotification() *Notification {
-	if x != nil {
-		return x.Notification
+func (x *Assertion) GetEmptyRecords() bool {
+	if x != nil && x.EmptyRecords != nil {
+		return *x.EmptyRecords
 	}
-	return nil
-}
-
-func (x *Assertion) GetKey() string {
-	if x != nil && x.Key != nil {
-		return *x.Key
-	}
-	return ""
-}
-
-func (x *Assertion) GetValue() []byte {
-	if x != nil {
-		return x.Value
-	}
-	return nil
+	return false
 }
 
 func (x *Assertion) GetPartitionKey() string {
@@ -935,15 +972,23 @@ func (x *Assertion) GetPartitionKey() string {
 	return ""
 }
 
-func (x *Assertion) GetKeyNotFound() bool {
-	if x != nil && x.KeyNotFound != nil {
-		return *x.KeyNotFound
+func (x *Assertion) GetRecords() []*Record {
+	if x != nil {
+		return x.Records
 	}
-	return false
+	return nil
+}
+
+func (x *Assertion) GetNotification() *Notification {
+	if x != nil {
+		return x.Notification
+	}
+	return nil
 }
 
 type ExecuteCommand struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Testcase      string                 `protobuf:"bytes,1,opt,name=testcase,proto3" json:"testcase,omitempty"`
 	Operation     *Operation             `protobuf:"bytes,2,opt,name=operation,proto3" json:"operation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -951,7 +996,7 @@ type ExecuteCommand struct {
 
 func (x *ExecuteCommand) Reset() {
 	*x = ExecuteCommand{}
-	mi := &file_okk_proto_msgTypes[11]
+	mi := &file_okk_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -963,7 +1008,7 @@ func (x *ExecuteCommand) String() string {
 func (*ExecuteCommand) ProtoMessage() {}
 
 func (x *ExecuteCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[11]
+	mi := &file_okk_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -976,7 +1021,14 @@ func (x *ExecuteCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteCommand.ProtoReflect.Descriptor instead.
 func (*ExecuteCommand) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{11}
+	return file_okk_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ExecuteCommand) GetTestcase() string {
+	if x != nil {
+		return x.Testcase
+	}
+	return ""
 }
 
 func (x *ExecuteCommand) GetOperation() *Operation {
@@ -996,7 +1048,7 @@ type ExecuteResponse struct {
 
 func (x *ExecuteResponse) Reset() {
 	*x = ExecuteResponse{}
-	mi := &file_okk_proto_msgTypes[12]
+	mi := &file_okk_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1008,7 +1060,7 @@ func (x *ExecuteResponse) String() string {
 func (*ExecuteResponse) ProtoMessage() {}
 
 func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_okk_proto_msgTypes[12]
+	mi := &file_okk_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1021,7 +1073,7 @@ func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteResponse) Descriptor() ([]byte, []int) {
-	return file_okk_proto_rawDescGZIP(), []int{12}
+	return file_okk_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ExecuteResponse) GetStatus() Status {
@@ -1096,21 +1148,22 @@ const file_okk_proto_rawDesc = "" +
 	"\n" +
 	"_key_startB\n" +
 	"\n" +
-	"\b_key_end\"\xe9\x02\n" +
+	"\b_key_end\"0\n" +
+	"\x06Record\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value\"\xde\x02\n" +
 	"\tAssertion\x12.\n" +
-	"\x10eventually_empty\x18\x01 \x01(\bH\x00R\x0feventuallyEmpty\x88\x01\x01\x12K\n" +
-	"\fnotification\x18\x02 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x01R\fnotification\x88\x01\x01\x12\x15\n" +
-	"\x03key\x18\x03 \x01(\tH\x02R\x03key\x88\x01\x01\x12\x19\n" +
-	"\x05value\x18\x04 \x01(\fH\x03R\x05value\x88\x01\x01\x12(\n" +
-	"\rpartition_key\x18\x05 \x01(\tH\x04R\fpartitionKey\x88\x01\x01\x12'\n" +
-	"\rkey_not_found\x18\x06 \x01(\bH\x05R\vkeyNotFound\x88\x01\x01B\x13\n" +
-	"\x11_eventually_emptyB\x0f\n" +
-	"\r_notificationB\x06\n" +
-	"\x04_keyB\b\n" +
-	"\x06_valueB\x10\n" +
-	"\x0e_partition_keyB\x10\n" +
-	"\x0e_key_not_found\"O\n" +
-	"\x0eExecuteCommand\x12=\n" +
+	"\x10eventually_empty\x18\x01 \x01(\bH\x00R\x0feventuallyEmpty\x88\x01\x01\x12(\n" +
+	"\rempty_records\x18\x02 \x01(\bH\x01R\femptyRecords\x88\x01\x01\x12(\n" +
+	"\rpartition_key\x18\x03 \x01(\tH\x02R\fpartitionKey\x88\x01\x01\x126\n" +
+	"\arecords\x18\x04 \x03(\v2\x1c.io.oxia.okk.proto.v1.RecordR\arecords\x12K\n" +
+	"\fnotification\x18\x05 \x01(\v2\".io.oxia.okk.proto.v1.NotificationH\x03R\fnotification\x88\x01\x01B\x13\n" +
+	"\x11_eventually_emptyB\x10\n" +
+	"\x0e_empty_recordsB\x10\n" +
+	"\x0e_partition_keyB\x0f\n" +
+	"\r_notification\"k\n" +
+	"\x0eExecuteCommand\x12\x1a\n" +
+	"\btestcase\x18\x01 \x01(\tR\btestcase\x12=\n" +
 	"\toperation\x18\x02 \x01(\v2\x1f.io.oxia.okk.proto.v1.OperationR\toperation\"h\n" +
 	"\x0fExecuteResponse\x124\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1c.io.oxia.okk.proto.v1.StatusR\x06status\x12\x1f\n" +
@@ -1149,7 +1202,7 @@ func file_okk_proto_rawDescGZIP() []byte {
 }
 
 var file_okk_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_okk_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_okk_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_okk_proto_goTypes = []any{
 	(KeyComparisonType)(0),          // 0: io.oxia.okk.proto.v1.KeyComparisonType
 	(NotificationType)(0),           // 1: io.oxia.okk.proto.v1.NotificationType
@@ -1164,13 +1217,14 @@ var file_okk_proto_goTypes = []any{
 	(*Operation)(nil),               // 10: io.oxia.okk.proto.v1.Operation
 	(*Precondition)(nil),            // 11: io.oxia.okk.proto.v1.Precondition
 	(*Notification)(nil),            // 12: io.oxia.okk.proto.v1.Notification
-	(*Assertion)(nil),               // 13: io.oxia.okk.proto.v1.Assertion
-	(*ExecuteCommand)(nil),          // 14: io.oxia.okk.proto.v1.ExecuteCommand
-	(*ExecuteResponse)(nil),         // 15: io.oxia.okk.proto.v1.ExecuteResponse
+	(*Record)(nil),                  // 13: io.oxia.okk.proto.v1.Record
+	(*Assertion)(nil),               // 14: io.oxia.okk.proto.v1.Assertion
+	(*ExecuteCommand)(nil),          // 15: io.oxia.okk.proto.v1.ExecuteCommand
+	(*ExecuteResponse)(nil),         // 16: io.oxia.okk.proto.v1.ExecuteResponse
 }
 var file_okk_proto_depIdxs = []int32{
 	0,  // 0: io.oxia.okk.proto.v1.OperationGet.comparison_type:type_name -> io.oxia.okk.proto.v1.KeyComparisonType
-	13, // 1: io.oxia.okk.proto.v1.Operation.assertion:type_name -> io.oxia.okk.proto.v1.Assertion
+	14, // 1: io.oxia.okk.proto.v1.Operation.assertion:type_name -> io.oxia.okk.proto.v1.Assertion
 	11, // 2: io.oxia.okk.proto.v1.Operation.precondition:type_name -> io.oxia.okk.proto.v1.Precondition
 	4,  // 3: io.oxia.okk.proto.v1.Operation.put:type_name -> io.oxia.okk.proto.v1.OperationPut
 	8,  // 4: io.oxia.okk.proto.v1.Operation.delete:type_name -> io.oxia.okk.proto.v1.OperationDelete
@@ -1180,16 +1234,17 @@ var file_okk_proto_depIdxs = []int32{
 	3,  // 8: io.oxia.okk.proto.v1.Operation.session_restart:type_name -> io.oxia.okk.proto.v1.OperationSessionRestart
 	9,  // 9: io.oxia.okk.proto.v1.Operation.delete_range:type_name -> io.oxia.okk.proto.v1.OperationDeleteRange
 	1,  // 10: io.oxia.okk.proto.v1.Notification.type:type_name -> io.oxia.okk.proto.v1.NotificationType
-	12, // 11: io.oxia.okk.proto.v1.Assertion.notification:type_name -> io.oxia.okk.proto.v1.Notification
-	10, // 12: io.oxia.okk.proto.v1.ExecuteCommand.operation:type_name -> io.oxia.okk.proto.v1.Operation
-	2,  // 13: io.oxia.okk.proto.v1.ExecuteResponse.status:type_name -> io.oxia.okk.proto.v1.Status
-	14, // 14: io.oxia.okk.proto.v1.Okk.Execute:input_type -> io.oxia.okk.proto.v1.ExecuteCommand
-	15, // 15: io.oxia.okk.proto.v1.Okk.Execute:output_type -> io.oxia.okk.proto.v1.ExecuteResponse
-	15, // [15:16] is the sub-list for method output_type
-	14, // [14:15] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	13, // 11: io.oxia.okk.proto.v1.Assertion.records:type_name -> io.oxia.okk.proto.v1.Record
+	12, // 12: io.oxia.okk.proto.v1.Assertion.notification:type_name -> io.oxia.okk.proto.v1.Notification
+	10, // 13: io.oxia.okk.proto.v1.ExecuteCommand.operation:type_name -> io.oxia.okk.proto.v1.Operation
+	2,  // 14: io.oxia.okk.proto.v1.ExecuteResponse.status:type_name -> io.oxia.okk.proto.v1.Status
+	15, // 15: io.oxia.okk.proto.v1.Okk.Execute:input_type -> io.oxia.okk.proto.v1.ExecuteCommand
+	16, // 16: io.oxia.okk.proto.v1.Okk.Execute:output_type -> io.oxia.okk.proto.v1.ExecuteResponse
+	16, // [16:17] is the sub-list for method output_type
+	15, // [15:16] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_okk_proto_init() }
@@ -1209,14 +1264,14 @@ func file_okk_proto_init() {
 	}
 	file_okk_proto_msgTypes[8].OneofWrappers = []any{}
 	file_okk_proto_msgTypes[9].OneofWrappers = []any{}
-	file_okk_proto_msgTypes[10].OneofWrappers = []any{}
+	file_okk_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_okk_proto_rawDesc), len(file_okk_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

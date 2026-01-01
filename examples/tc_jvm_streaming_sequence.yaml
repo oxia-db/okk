@@ -1,7 +1,7 @@
 apiVersion: core.oxia.io/v1
 kind: TestCase
 metadata:
-  name: tc-streaming-sequence-jvm
+  name: tc-streaming-sequence-jvm-0
   namespace: okk-system
 spec:
   type: streamingSequence
