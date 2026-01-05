@@ -306,6 +306,7 @@ func (b *basicKv) processInitStage() (*proto.Operation, bool) {
 		},
 	}, true
 }
+
 func makeFormatInt64(value int64) string {
 	return fmt.Sprintf("%020d", value)
 }

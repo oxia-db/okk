@@ -9,6 +9,10 @@ import io.oxia.okk.proto.v1.ExecuteResponse;
 import io.oxia.okk.proto.v1.OkkGrpc;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.*;
+
 @Slf4j
 public class WorkerService extends OkkGrpc.OkkImplBase {
     private final Engine engine;
@@ -24,16 +28,19 @@ public class WorkerService extends OkkGrpc.OkkImplBase {
 
             @Override
             public void onNext(ExecuteCommand command) {
-                try {
-                    log.info("Received command: {}", JsonFormat.printer()
-                            .omittingInsignificantWhitespace()
-                            .print(command));
-                    final ExecuteResponse executeResponse = engine.onCommand(command);
-                    responseObserver.onNext(executeResponse);
-                } catch (Throwable ex) {
-                    log.error("Stream has been closed due to an unexpected error when processing the command.");
-                    responseObserver.onError(ex);
-                }
+                runAsync(() -> {
+                    try {
+                        log.info("Received command: {}", JsonFormat.printer()
+                                .omittingInsignificantWhitespace()
+                                .print(command));
+                        // avoid call it in the grpc thread
+                        final ExecuteResponse executeResponse = engine.onCommand(command);
+                        responseObserver.onNext(executeResponse);
+                    } catch (Throwable ex) {
+                        log.error("Stream has been closed due to an unexpected error when processing the command.");
+                        responseObserver.onError(ex);
+                    }
+                });
             }
 
             @Override

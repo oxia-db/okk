@@ -3,7 +3,9 @@ package generator
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"math"
+	"math/rand/v2"
+	"strconv"
 	"time"
 
 	"github.com/bits-and-blooms/bitset"
@@ -11,6 +13,7 @@ import (
 	v1 "github.com/oxia-io/okk/api/v1"
 	"github.com/oxia-io/okk/internal/proto"
 	"golang.org/x/time/rate"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/utils/pointer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -27,8 +30,11 @@ type metadataNotification struct {
 	rateLimit *rate.Limiter
 	startTime time.Time
 
-	sequence int64
-	rand     *rand.Rand
+	sequence uint
+
+	keySpace        uint
+	initialized     bool
+	actionGenerator *ActionGenerator
 
 	keys bitset.BitSet
 }
@@ -37,7 +43,7 @@ func (m *metadataNotification) Name() string {
 	return "metadata-notification"
 }
 
-func (m *metadataNotification) nextSequence() int64 {
+func (m *metadataNotification) nextSequence() uint {
 	nextSequence := m.sequence
 	m.sequence = m.sequence + 1
 	return nextSequence
@@ -53,106 +59,135 @@ func (m *metadataNotification) Next() (*proto.Operation, bool) {
 		return nil, false
 	}
 
-	for {
-		factor := m.rand.Intn(100)
-		uintFactor := uint(factor)
-		switch {
-		case factor < 33:
-			operation := m.executePut(uintFactor)
-			return operation, true
-		case factor < 66:
-			if !m.keys.Test(uintFactor) {
-				// put first if no key
-				return m.executePut(uintFactor), true
+	if !m.initialized {
+		return m.processInitStage()
+	}
+
+	return m.processDataValidation()
+}
+
+func (m *metadataNotification) processDataValidation() (*proto.Operation, bool) {
+	action := m.actionGenerator.Next()
+	keyIndex := rand.UintN(m.keySpace)
+	switch action {
+	case OpPut:
+		{
+			key := fmt.Sprintf("/notification/%s/%020d", m.taskName, keyIndex)
+
+			var notificationType proto.NotificationType
+			exist := m.keys.Test(keyIndex)
+			if exist {
+				notificationType = proto.NotificationType_KEY_MODIFIED
+			} else {
+				notificationType = proto.NotificationType_KEY_CREATED
 			}
-			m.keys.Clear(uintFactor)
-			// delete
-			operation := m.executeDelete(uintFactor)
-			return operation, true
-		default:
-			if !m.keys.Test(uintFactor) {
-				// put first if no key
-				return m.executePut(uintFactor), true
+			m.keys.Set(keyIndex)
+
+			return &proto.Operation{
+				Precondition: &proto.Precondition{
+					WatchNotification: pointer.Bool(true),
+				},
+				Assertion: &proto.Assertion{
+					Notification: &proto.Notification{
+						Type: notificationType,
+						Key:  &key,
+					},
+				},
+				Operation: &proto.Operation_Put{
+					Put: &proto.OperationPut{
+						Key:   key,
+						Value: makeValue(m.taskName, string(uuid.NewUUID())),
+					},
+				},
+			}, true
+		}
+	case OpDelete:
+		{
+			key := fmt.Sprintf("/notification/%s/%020d", m.taskName, keyIndex)
+
+			operation := proto.Operation{
+				Precondition: &proto.Precondition{
+					WatchNotification: pointer.Bool(true),
+				},
+				Operation: &proto.Operation_Delete{
+					Delete: &proto.OperationDelete{
+						Key: key,
+					},
+				},
 			}
-			m.keys.ClearAll()
-			// delete range
-			operation := m.executeDeleteRange()
-			return operation, true
+			if m.keys.Test(keyIndex) {
+				// only expect notification when key really deleted
+				operation.Assertion = &proto.Assertion{
+					Notification: &proto.Notification{
+						Type: proto.NotificationType_KEY_DELETED,
+						Key:  &key,
+					},
+				}
+			}
+			m.keys.Clear(keyIndex)
+			return &operation, true
+		}
+	case OpDeleteRange:
+		{
+			keyIndexStart := keyIndex
+			keyIndexEnd := keyIndex + rand.UintN(100)
+			for i := keyIndexStart; i < keyIndexEnd; i++ {
+				m.keys.Clear(i)
+			}
+
+			keyStart := fmt.Sprintf("/notification/%s/%020d", m.taskName, keyIndexStart)
+			keyEnd := fmt.Sprintf("/notification/%s/%020d", m.taskName, keyIndexEnd)
+
+			return &proto.Operation{
+				Precondition: &proto.Precondition{
+					WatchNotification: pointer.Bool(true),
+				},
+				Assertion: &proto.Assertion{
+					Notification: &proto.Notification{
+						Type:     proto.NotificationType_KEY_RANGE_DELETED,
+						KeyStart: &keyStart,
+						KeyEnd:   &keyEnd,
+					},
+				},
+				Operation: &proto.Operation_DeleteRange{
+					DeleteRange: &proto.OperationDeleteRange{
+						KeyStart: keyStart,
+						KeyEnd:   keyEnd,
+					},
+				},
+			}, true
 		}
 	}
+	return nil, false
 }
 
-func (m *metadataNotification) executeDeleteRange() *proto.Operation {
-	operation := &proto.Operation{
-		Sequence: m.nextSequence(),
-		Precondition: &proto.Precondition{
-			WatchNotification: pointer.Bool(true),
-		},
-		Assertion: &proto.Assertion{
-			Notification: &proto.Notification{
-				Type:     proto.NotificationType_KEY_RANGE_DELETED,
-				KeyStart: pointer.String(fmt.Sprintf("/notification/%s/", m.taskName)),
-				KeyEnd:   pointer.String(fmt.Sprintf("/notification/%s//", m.taskName)),
-			},
-		},
-		Operation: &proto.Operation_DeleteRange{
-			DeleteRange: &proto.OperationDeleteRange{
-				KeyStart: fmt.Sprintf("/notification/%s/", m.taskName),
-				KeyEnd:   fmt.Sprintf("/notification/%s//", m.taskName),
-			},
-		},
-	}
-	return operation
-}
+func (m *metadataNotification) processInitStage() (*proto.Operation, bool) {
+	sequence := m.nextSequence()
+	// cache data first
+	data := string(uuid.NewUUID())
+	m.keys.Set(sequence)
 
-func (m *metadataNotification) executeDelete(uintFactor uint) *proto.Operation {
-	operation := &proto.Operation{
-		Sequence: m.nextSequence(),
+	if sequence >= m.keySpace {
+		m.initialized = true
+	}
+	key := fmt.Sprintf("/notification/%s/%020d", m.taskName, sequence)
+	return &proto.Operation{
 		Precondition: &proto.Precondition{
 			WatchNotification: pointer.Bool(true),
-		},
-		Assertion: &proto.Assertion{
-			Notification: &proto.Notification{
-				Type: proto.NotificationType_KEY_DELETED,
-				Key:  pointer.String(fmt.Sprintf("/notification/%s/%d", m.taskName, uintFactor)),
-			},
-		},
-		Operation: &proto.Operation_Delete{
-			Delete: &proto.OperationDelete{
-				Key: fmt.Sprintf("/notification/%s/%d", m.taskName, uintFactor),
-			},
-		},
-	}
-	return operation
-}
-
-func (m *metadataNotification) executePut(uintFactor uint) *proto.Operation {
-	var notificationType proto.NotificationType
-	if m.keys.Test(uintFactor) {
-		notificationType = proto.NotificationType_KEY_MODIFIED
-	} else {
-		notificationType = proto.NotificationType_KEY_CREATED
-	}
-	// put
-	operation := &proto.Operation{
-		Sequence: m.nextSequence(),
-		Precondition: &proto.Precondition{
-			WatchNotification: pointer.Bool(true),
-		},
-		Assertion: &proto.Assertion{
-			Notification: &proto.Notification{
-				Type: notificationType,
-				Key:  pointer.String(fmt.Sprintf("/notification/%s/%d", m.taskName, uintFactor)),
-			},
 		},
 		Operation: &proto.Operation_Put{
 			Put: &proto.OperationPut{
-				Key:   fmt.Sprintf("/notification/%s/%d", m.taskName, uintFactor),
-				Value: []byte("notification"),
+				Key:   key,
+				Value: makeValue(m.taskName, data),
 			},
 		},
-	}
-	return operation
+		Assertion: &proto.Assertion{
+			Notification: &proto.Notification{
+				Type: proto.NotificationType_KEY_CREATED,
+				Key:  &key,
+			},
+		},
+	}, true
 }
 
 func NewMetadataNotificationGenerator(ctx context.Context, tc *v1.TestCase) Generator {
@@ -161,14 +196,39 @@ func NewMetadataNotificationGenerator(ctx context.Context, tc *v1.TestCase) Gene
 	namedLogger := logf.FromContext(ctx).WithName("metadata-notification-generator")
 	namedLogger.Info("Starting metadata notification generator ", "task-name", tc.Name)
 
+	keySpace := uint(1000)
+	if properties := tc.Spec.Properties; properties != nil {
+		if num, exist := properties[propertiesKeyKeySpace]; exist {
+			intVal, err := strconv.ParseUint(num, 10, 64)
+			if intVal > math.MaxUint {
+				intVal = math.MaxUint
+				namedLogger.Info("Failed to convert property '%s' to uint, fallback to the the maximum value of uint", "key-space", num, "parsed-key-space", intVal)
+			}
+			if err != nil {
+				namedLogger.Error(err, "Failed to convert property '%s' to int, fallback to the default value 1000", "key-space", num)
+			} else {
+				keySpace = uint(intVal)
+			}
+		}
+	}
+
+	actionGenerator := NewActionGenerator(map[OpType]int{
+		OpPut:         34,
+		OpDelete:      33,
+		OpDeleteRange: 33,
+	})
+
 	return &metadataNotification{
-		Logger:     &namedLogger,
-		Context:    currentContext,
-		CancelFunc: currentContextCanceled,
-		taskName:   tc.Name,
-		duration:   tc.Duration(),
-		startTime:  time.Now(),
-		rateLimit:  rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
-		rand:       rand.New(rand.NewSource(time.Now().UnixNano())),
+		Logger:          &namedLogger,
+		Context:         currentContext,
+		CancelFunc:      currentContextCanceled,
+		taskName:        tc.Name,
+		duration:        tc.Duration(),
+		startTime:       time.Now(),
+		rateLimit:       rate.NewLimiter(rate.Every(1*time.Second), tc.OpRate()),
+		actionGenerator: actionGenerator,
+		initialized:     false,
+		keySpace:        keySpace,
+		keys:            bitset.BitSet{},
 	}
 }

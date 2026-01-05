@@ -1,18 +1,39 @@
 package io.github.oxia.worker.engine.oxia;
 
 import io.github.oxia.okk.worker.engine.Engine;
-import io.oxia.client.api.*;
+import io.oxia.client.api.AsyncOxiaClient;
+import io.oxia.client.api.GetResult;
+import io.oxia.client.api.Notification;
+import io.oxia.client.api.Notification;
+import io.oxia.client.api.OxiaClientBuilder;
+import io.oxia.client.api.PutResult;
 import io.oxia.client.api.options.GetOption;
 import io.oxia.client.api.options.PutOption;
 import io.oxia.client.api.options.defs.OptionEphemeral;
-import io.oxia.okk.proto.v1.*;
+import io.oxia.okk.proto.v1.Assertion;
+import io.oxia.okk.proto.v1.ExecuteCommand;
+import io.oxia.okk.proto.v1.ExecuteResponse;
+import io.oxia.okk.proto.v1.KeyComparisonType;
+import io.oxia.okk.proto.v1.NotificationType;
+import io.oxia.okk.proto.v1.Operation;
+import io.oxia.okk.proto.v1.OperationDelete;
+import io.oxia.okk.proto.v1.OperationDeleteRange;
+import io.oxia.okk.proto.v1.OperationGet;
+import io.oxia.okk.proto.v1.OperationList;
+import io.oxia.okk.proto.v1.OperationPut;
+import io.oxia.okk.proto.v1.OperationScan;
+import io.oxia.okk.proto.v1.Precondition;
 import io.oxia.okk.proto.v1.Record;
+import io.oxia.okk.proto.v1.Status;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class OxiaEngine implements Engine {
@@ -20,11 +41,17 @@ public class OxiaEngine implements Engine {
     private Options options;
     private AsyncOxiaClient oxiaClient;
 
+
+    private boolean watchedNotification;
+    private BlockingDeque<Notification> notifications;
+
     @Override
     public void init() {
         options = Options.fromEnv();
         log.info("Loading oxia engine. options: {}", options);
         initClient();
+        watchedNotification = false;
+        notifications = new LinkedBlockingDeque<>();
     }
 
 
@@ -34,7 +61,22 @@ public class OxiaEngine implements Engine {
                 .asyncClient().join();
     }
 
+    private void maybeInitNotifications() {
+        if (watchedNotification) {
+            return;
+        }
+        if (oxiaClient == null) {
+            initClient();
+        }
+        oxiaClient.notifications(notification -> {
+            log.info("receive the notification {}", notification);
+            notifications.add(notification);
+        });
+        watchedNotification = true;
+    }
 
+
+    @SneakyThrows
     private ExecuteResponse processPut(Operation operation) {
         if (operation.hasPrecondition()) {
             final Precondition precondition = operation.getPrecondition();
@@ -67,6 +109,9 @@ public class OxiaEngine implements Engine {
                     }
                 }
             }
+            if (precondition.getWatchNotification()) {
+                maybeInitNotifications();
+            }
         }
 
         final OperationPut put = operation.getPut();
@@ -95,6 +140,34 @@ public class OxiaEngine implements Engine {
                     return ExecuteResponse.newBuilder()
                             .setStatus(Status.AssertionFailure)
                             .setStatusInfo("mismatched key.")
+                            .build();
+                }
+            }
+            if (assertion.hasNotification()) {
+                final var notification = assertion.getNotification();
+                final NotificationType expectType = notification.getType();
+                final String expectKey = notification.getKey();
+
+                final var actualNotification = notifications.poll(3, TimeUnit.MINUTES);
+                if (actualNotification instanceof Notification.KeyCreated an) {
+                    if (expectType != NotificationType.KEY_CREATED || !expectKey.equals(an.key())) {
+                        return ExecuteResponse.newBuilder()
+                                .setStatus(Status.AssertionFailure)
+                                .setStatusInfo("mismatched notification.")
+                                .build();
+                    }
+
+                } else if (actualNotification instanceof Notification.KeyModified an) {
+                    if (expectType != NotificationType.KEY_MODIFIED || !expectKey.equals(an.key())) {
+                        return ExecuteResponse.newBuilder()
+                                .setStatus(Status.AssertionFailure)
+                                .setStatusInfo("mismatched notification.")
+                                .build();
+                    }
+                } else {
+                    return ExecuteResponse.newBuilder()
+                            .setStatus(Status.AssertionFailure)
+                            .setStatusInfo("mismatched notification.")
                             .build();
                 }
             }
@@ -160,7 +233,7 @@ public class OxiaEngine implements Engine {
         GetResult getResult = oxiaClient.get(key, getOptions).join();
 
         // avoid expose internal keys
-        if (getResult != null){
+        if (getResult != null) {
             final String getKey = getResult.key();
             if (getKey.startsWith("__oxia/")  //
                     || !getKey.startsWith(testcase)) {
@@ -251,21 +324,94 @@ public class OxiaEngine implements Engine {
                 .build();
     }
 
+    @SneakyThrows
     private ExecuteResponse processDelete(Operation operation) {
         final OperationDelete delete = operation.getDelete();
         final String key = delete.getKey();
+        if (operation.hasPrecondition()) {
+            final Precondition precondition = operation.getPrecondition();
+            if (precondition.getWatchNotification()) {
+                maybeInitNotifications();
+            }
+        }
+
         oxiaClient.delete(key).join();
+
+        if (operation.hasAssertion()) {
+            final Assertion assertion = operation.getAssertion();
+            if (assertion.hasNotification()) {
+                final var notification = assertion.getNotification();
+                final NotificationType expectType = notification.getType();
+                final String expectKey = notification.getKey();
+
+                final Notification actualNotification = notifications.poll(3, TimeUnit.MINUTES);
+                if (actualNotification instanceof Notification.KeyDeleted an) {
+                    if (expectType != NotificationType.KEY_DELETED || !expectKey.equals(an.key())) {
+                        return ExecuteResponse.newBuilder()
+                                .setStatus(Status.AssertionFailure)
+                                .setStatusInfo("mismatched notification.")
+                                .build();
+                    }
+                } else {
+                    return ExecuteResponse.newBuilder()
+                            .setStatus(Status.AssertionFailure)
+                            .setStatusInfo("mismatched notification.")
+                            .build();
+                }
+            }
+        }
         return ExecuteResponse.newBuilder()
                 .setStatus(Status.Ok)
                 .build();
     }
 
+    @SneakyThrows
     private ExecuteResponse processDeleteRange(Operation operation) {
         final OperationDeleteRange deleteRange = operation.getDeleteRange();
         final String keyStart = deleteRange.getKeyStart();
         final String keyEnd = deleteRange.getKeyEnd();
 
+        if (operation.hasPrecondition()) {
+            final Precondition precondition = operation.getPrecondition();
+            if (precondition.getWatchNotification()) {
+                maybeInitNotifications();
+            }
+        }
+
         oxiaClient.deleteRange(keyStart, keyEnd).join();
+
+        if (operation.hasAssertion()) {
+            final Assertion assertion = operation.getAssertion();
+            if (assertion.hasNotification()) {
+                final var notification = assertion.getNotification();
+                final NotificationType expectType = notification.getType();
+
+                final Notification actualNotification = notifications.poll(3, TimeUnit.MINUTES);
+                if (actualNotification instanceof Notification.KeyRangeDelete an) {
+                    if (expectType != NotificationType.KEY_RANGE_DELETED) {
+                        return ExecuteResponse.newBuilder()
+                                .setStatus(Status.AssertionFailure)
+                                .setStatusInfo("mismatched notification.")
+                                .build();
+                    }
+                    final String notificationKeyStart = notification.getKeyStart();
+                    final String notificationKeyEnd = notification.getKeyEnd();
+
+                    if (!notificationKeyStart.equals(an.startKeyInclusive()) ||
+                            !notificationKeyEnd.equals(an.endKeyExclusive())) {
+                        return ExecuteResponse.newBuilder()
+                                .setStatus(Status.AssertionFailure)
+                                .setStatusInfo("mismatched notification.")
+                                .build();
+                    }
+                } else {
+                    return ExecuteResponse.newBuilder()
+                            .setStatus(Status.AssertionFailure)
+                            .setStatusInfo("mismatched notification.")
+                            .build();
+                }
+            }
+        }
 
         return ExecuteResponse.newBuilder()
                 .setStatus(Status.Ok)

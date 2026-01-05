@@ -26,8 +26,8 @@ func (pm *ProviderManager) GetProvider(worker string) (proto.OkkClient, error) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			PermitWithoutStream: true,
-			Time:                time.Second * 10,
-			Timeout:             time.Second * 5,
+			Time:                1 * time.Minute,
+			Timeout:             20 * time.Second,
 		}),
 	}
 	var provider *grpc.ClientConn
