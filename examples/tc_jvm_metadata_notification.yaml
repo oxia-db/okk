@@ -1,14 +1,12 @@
 apiVersion: core.oxia.io/v1
 kind: TestCase
 metadata:
-  name: tc-metadata-ephemeral-jvm-0
+  name: tc-notification-jvm-0
   namespace: okk-system
 spec:
-  type: metadataWithEphemeral
-  duration: "24h"
+  type: notification
+  duration: "6h"
   opRate: 100
-  properties:
-    checkpointNum: "1024"
   worker:
     image: oxia/okk-jvm-worker:main
     targetCluster:

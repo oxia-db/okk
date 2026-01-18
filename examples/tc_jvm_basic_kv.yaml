@@ -1,14 +1,14 @@
 apiVersion: core.oxia.io/v1
 kind: TestCase
 metadata:
-  name: tc-metadata-ephemeral-jvm-0
+  name: tc-basic-kv-jvm-0
   namespace: okk-system
 spec:
-  type: metadataWithEphemeral
+  type: basic
   duration: "24h"
   opRate: 100
   properties:
-    checkpointNum: "1024"
+    keySpace: "10000"
   worker:
     image: oxia/okk-jvm-worker:main
     targetCluster:

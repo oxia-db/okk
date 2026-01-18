@@ -6,6 +6,7 @@ metadata:
 spec:
   type: streamingSequence
   duration: "24h"
+  opRate: 100
   worker:
     image: oxia/okk-jvm-worker:main
     targetCluster:

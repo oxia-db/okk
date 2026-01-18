@@ -12,7 +12,7 @@ const (
 	TestCaseTypeStreamingSequence        = "streamingSequence"
 	TestCaseTypeMetadataWithEphemeral    = "metadataWithEphemeral"
 	TestCaseTypeMetadataWithVersionId    = "metadataWithVersionId"
-	TestCaseTypeMetadataWithNotification = "notification"
+	TestCaseTypeMetadataWithNotification = "metadataWithNotification"
 )
 
 type TestCaseSpec struct {
