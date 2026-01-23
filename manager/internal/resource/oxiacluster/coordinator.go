@@ -200,9 +200,10 @@ func applyCoordinatorDeployment(ctx context.Context, client client.Client, clust
 			},
 			Template: v2.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      coordinatorName,
-					Namespace: cluster.Namespace,
-					Labels:    Labels(ComponentCoordinator, cluster.Name),
+					Name:        coordinatorName,
+					Namespace:   cluster.Namespace,
+					Labels:      Labels(ComponentCoordinator, cluster.Name),
+					Annotations: getIstioAnnotations(cluster),
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(cluster, cluster.GetObjectKind().GroupVersionKind()),
 					},

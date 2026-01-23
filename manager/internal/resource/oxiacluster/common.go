@@ -59,3 +59,12 @@ func injectLabelsAndOwnership(objMeta *metav1.ObjectMeta, oxiaCluster *oxiav1.Ox
 		*metav1.NewControllerRef(oxiaCluster, oxiaCluster.GetObjectKind().GroupVersionKind()),
 	})
 }
+
+func getIstioAnnotations(oxiaCluster *oxiav1.OxiaCluster) map[string]string {
+	if !oxiaCluster.Spec.EnableIstio {
+		return nil
+	}
+	return map[string]string{
+		"sidecar.istio.io/inject": "true",
+	}
+}

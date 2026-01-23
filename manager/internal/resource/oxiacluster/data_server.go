@@ -97,9 +97,10 @@ func applyDataServerStatefulSet(ctx context.Context, client client.Client, clust
 			ServiceName:         fmt.Sprintf("%s-headless", dataServerName),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      dataServerName,
-					Namespace: cluster.Namespace,
-					Labels:    Labels(ComponentNode, cluster.Name),
+					Name:        dataServerName,
+					Namespace:   cluster.Namespace,
+					Labels:      Labels(ComponentNode, cluster.Name),
+					Annotations: getIstioAnnotations(cluster),
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(cluster, cluster.GetObjectKind().GroupVersionKind()),
 					},
