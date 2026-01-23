@@ -5,6 +5,8 @@ metadata:
   namespace: okk-system
 spec:
   image: oxia/oxia:latest
+  # Enable Istio sidecar injection for pods in this cluster
+  # enableIstio: true
   coordinator:
     namespaces:
       - name: okk

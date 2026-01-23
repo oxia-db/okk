@@ -58,6 +58,7 @@ func (o *OxiaClusterDataServer) GetReplicas() int32 {
 
 type OxiaClusterSpec struct {
 	Image                  *string                `json:"image,omitempty"`
+	EnableIstio            bool                   `json:"enableIstio,omitempty"`
 	OxiaClusterCoordinator OxiaClusterCoordinator `json:"coordinator,omitempty"`
 	OxiaClusterDataServer  OxiaClusterDataServer  `json:"dataServer,omitempty"`
 }

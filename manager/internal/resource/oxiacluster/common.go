@@ -59,3 +59,14 @@ func injectLabelsAndOwnership(objMeta *metav1.ObjectMeta, oxiaCluster *oxiav1.Ox
 		*metav1.NewControllerRef(oxiaCluster, oxiaCluster.GetObjectKind().GroupVersionKind()),
 	})
 }
+
+// getIstioAnnotations returns pod annotations for Istio sidecar injection when enabled.
+// Returns nil if EnableIstio is false, otherwise returns a map with the sidecar.istio.io/inject annotation.
+func getIstioAnnotations(oxiaCluster *oxiav1.OxiaCluster) map[string]string {
+	if !oxiaCluster.Spec.EnableIstio {
+		return nil
+	}
+	return map[string]string{
+		"sidecar.istio.io/inject": "true",
+	}
+}
