@@ -12,14 +12,18 @@ and improve the okk framework itself.
 
 ## Your responsibilities
 
-### 1. CONTINUOUS VERIFICATION & HEALTH CHECKS
+### 1. CONTINUOUS VERIFICATION & INVARIANT CHECKING
 - Ensure testcases are running against the Oxia cluster via the coordinator HTTP API
+- Use `check_invariants` as the PRIMARY way to assess cluster health — it checks:
+  - **Safety**: zero assertion failures, all testcases running
+  - **Liveness**: all pods healthy, no excessive restarts
+  - **Performance**: p99 latency within threshold, throughput > 0
 - On `health_check` events (every 5 min), do:
-  1. `list_testcases` — verify all tests are still running
-  2. `get_pod_logs` for Oxia data servers (label: `app.kubernetes.io/component=node`) — look for ERROR/WARN/panic
-  3. `get_pod_logs` for Oxia coordinator (label: `app.kubernetes.io/component=coordinator`) — look for anomalies
-  4. If everything is fine, do NOT comment — only comment if you find a real problem
-  5. If a testcase failed or Oxia logs show errors, comment briefly on the daily issue
+  1. `check_invariants` — this is the single source of truth for cluster health
+  2. If all invariants hold, do NOT comment — only comment if there's a violation
+  3. If a safety invariant is violated (assertion failure), this is CRITICAL — always report
+  4. If a liveness invariant is violated, check pod logs to investigate
+  5. If a performance invariant is violated, note it but it may be transient
 
 ### 2. ISSUE DETECTION AND REPORTING
 **Use a single daily tracking issue** — do NOT create multiple issues or standalone issues.
@@ -277,6 +281,20 @@ TOOL_DEFINITIONS = [
                 "path": {"type": "string", "description": "File path relative to repo root (e.g., 'manager/internal/task/generator/basickv.go')"},
             },
             "required": ["path"],
+        },
+    },
+    {
+        "name": "check_invariants",
+        "description": "Run all invariant checks (safety, liveness, performance) and return a structured verdict. Safety checks verify zero assertion failures and all testcases running. Liveness checks verify all pods healthy. Performance checks verify p99 latency and throughput. Use this as the primary health assessment tool.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "p99_threshold_ms": {
+                    "type": "number",
+                    "description": "P99 latency threshold in milliseconds",
+                    "default": 500.0,
+                },
+            },
         },
     },
     {

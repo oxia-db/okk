@@ -12,6 +12,7 @@ from okk_agent.tools.observe import ObserveTools
 from okk_agent.tools.act import ActTools
 from okk_agent.tools.report import ReportTools
 from okk_agent.tools.state import StateTools
+from okk_agent.tools.invariants import InvariantChecker
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +46,14 @@ class Agent:
         self, config: Config,
         observe: ObserveTools, act: ActTools,
         report: ReportTools | None, state: StateTools,
+        invariants: InvariantChecker | None = None,
     ):
         self.config = config
         self.observe = observe
         self.act = act
         self.report = report
         self.state = state
+        self.invariants = invariants
         self._provider = config.ai_provider
 
         if self._provider == "anthropic":
@@ -394,6 +397,11 @@ class Agent:
                 if self.report:
                     return self.report.read_okk_source(**input)
                 return json.dumps({"status": "skipped", "reason": "GitHub reporting disabled"})
+            # Invariant tools
+            elif name == "check_invariants":
+                if self.invariants:
+                    return self.invariants.check_invariants(**input)
+                return json.dumps({"error": "Invariant checker not available"})
             # State tools
             elif name == "get_agent_state":
                 return self.state.get_agent_state(**input)

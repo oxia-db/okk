@@ -20,6 +20,7 @@ from okk_agent.tools.observe import ObserveTools
 from okk_agent.tools.act import ActTools
 from okk_agent.tools.report import ReportTools
 from okk_agent.tools.state import StateTools
+from okk_agent.tools.invariants import InvariantChecker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,10 +50,11 @@ class OkkAgent:
         act = ActTools(config, k8s_custom)
         report = ReportTools(config) if config.github_token else None
         state = StateTools(config, k8s_core)
+        invariants = InvariantChecker(config, k8s_core)
 
         # Init the AI agent (None if no credentials — runs in dry-run mode)
         if config.has_ai:
-            self.agent = Agent(config, observe, act, report, state)
+            self.agent = Agent(config, observe, act, report, state, invariants)
         else:
             self.agent = None
             logger.warning("No AI credentials — running in dry-run mode (events logged, no AI decisions)")
