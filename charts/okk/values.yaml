@@ -10,24 +10,24 @@ coordinator:
       memory: 256Mi
 
 agent:
+  enabled: false
+
+pilot:
   enabled: true
   createSecrets: false
-  image: okk-agent:local
+  image: mattison/okk-pilot:latest
   replicas: 1
   port: 8080
   env:
-    AI_PROVIDER: "copilot"
-    COPILOT_MODEL: "gpt-4o"
-    OKK_NAMESPACE: okk-system
+    OKK_NAMESPACE: okk
     IN_CLUSTER: "true"
     PROMETHEUS_URL: "http://prometheus-operated:9090"
     DAILY_REPORT_HOUR: "0"
     OXIA_IMAGE: "oxia/oxia:latest"
     OKK_WORKER_IMAGE: "oxia/okk-jvm-worker:main"
     COORDINATOR_URL: "http://okk-coordinator:8080"
-    TRIAGE_ENABLED: "false"
+    AI_ENABLED: "false"
   secrets:
-    ANTHROPIC_API_KEY: "replace-me"
     GITHUB_TOKEN: "replace-me"
   resources:
     requests:
@@ -39,7 +39,7 @@ agent:
 worker:
   image: oxia/okk-jvm-worker:main
   port: 6666
-  oxiaServiceUrl: "coordinator-okk:6648"
+  oxiaServiceUrl: "oxia:6648"
   oxiaNamespace: "default"
   resources:
     requests:

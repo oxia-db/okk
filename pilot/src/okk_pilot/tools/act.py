@@ -7,7 +7,7 @@ import urllib.error
 
 from kubernetes import client as k8s_client
 
-from okk_agent.config import Config
+from okk_pilot.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class ActTools:
                 "_plural": "podchaos",
                 "apiVersion": f"{CHAOS_GROUP}/{CHAOS_VERSION}",
                 "kind": "PodChaos",
-                "metadata": {"name": f"agent-{name_suffix}", "namespace": namespace},
+                "metadata": {"name": f"pilot-{name_suffix}", "namespace": namespace},
                 "spec": {**selector, "action": "pod-kill", "duration": duration},
             }
         elif type == "pod-failure":
@@ -117,7 +117,7 @@ class ActTools:
                 "_plural": "podchaos",
                 "apiVersion": f"{CHAOS_GROUP}/{CHAOS_VERSION}",
                 "kind": "PodChaos",
-                "metadata": {"name": f"agent-{name_suffix}", "namespace": namespace},
+                "metadata": {"name": f"pilot-{name_suffix}", "namespace": namespace},
                 "spec": {**selector, "action": "pod-failure", "duration": duration},
             }
         elif type == "network-delay":
@@ -125,7 +125,7 @@ class ActTools:
                 "_plural": "networkchaos",
                 "apiVersion": f"{CHAOS_GROUP}/{CHAOS_VERSION}",
                 "kind": "NetworkChaos",
-                "metadata": {"name": f"agent-{name_suffix}", "namespace": namespace},
+                "metadata": {"name": f"pilot-{name_suffix}", "namespace": namespace},
                 "spec": {
                     **selector, "action": "delay", "duration": duration,
                     "delay": {"latency": "10ms", "jitter": "5ms"},
@@ -136,7 +136,7 @@ class ActTools:
                 "_plural": "networkchaos",
                 "apiVersion": f"{CHAOS_GROUP}/{CHAOS_VERSION}",
                 "kind": "NetworkChaos",
-                "metadata": {"name": f"agent-{name_suffix}", "namespace": namespace},
+                "metadata": {"name": f"pilot-{name_suffix}", "namespace": namespace},
                 "spec": {
                     **selector, "action": "partition", "duration": duration,
                     "direction": "both",
@@ -147,7 +147,7 @@ class ActTools:
                 "_plural": "stresschaos",
                 "apiVersion": f"{CHAOS_GROUP}/{CHAOS_VERSION}",
                 "kind": "StressChaos",
-                "metadata": {"name": f"agent-{name_suffix}", "namespace": namespace},
+                "metadata": {"name": f"pilot-{name_suffix}", "namespace": namespace},
                 "spec": {
                     **selector, "duration": duration,
                     "stressors": {"cpu": {"workers": 1, "load": 100}},
@@ -158,7 +158,7 @@ class ActTools:
                 "_plural": "stresschaos",
                 "apiVersion": f"{CHAOS_GROUP}/{CHAOS_VERSION}",
                 "kind": "StressChaos",
-                "metadata": {"name": f"agent-{name_suffix}", "namespace": namespace},
+                "metadata": {"name": f"pilot-{name_suffix}", "namespace": namespace},
                 "spec": {
                     **selector, "duration": duration,
                     "stressors": {"memory": {"workers": 1, "size": "256MB"}},
@@ -169,7 +169,7 @@ class ActTools:
                 "_plural": "timechaos",
                 "apiVersion": f"{CHAOS_GROUP}/{CHAOS_VERSION}",
                 "kind": "TimeChaos",
-                "metadata": {"name": f"agent-{name_suffix}", "namespace": namespace},
+                "metadata": {"name": f"pilot-{name_suffix}", "namespace": namespace},
                 "spec": {
                     **selector, "duration": duration,
                     "timeOffset": "+10s",
@@ -179,7 +179,6 @@ class ActTools:
 
     def delete_chaos(self, name: str, namespace: str = "okk") -> str:
         """Delete a chaos experiment by name."""
-        # Try each chaos type
         for plural, kind in [
             ("podchaos", "PodChaos"),
             ("networkchaos", "NetworkChaos"),
@@ -203,12 +202,10 @@ class ActTools:
             return json.dumps({"error": "Replicas must be between 1 and 10"})
 
         try:
-            # Find the Oxia StatefulSet
             sts_list = self.k8s_apps.list_namespaced_stateful_set(
                 namespace=namespace, label_selector="app.kubernetes.io/name=oxia-cluster",
             )
             if not sts_list.items:
-                # Fallback: try by name
                 sts_list = self.k8s_apps.list_namespaced_stateful_set(namespace=namespace)
                 sts_list.items = [s for s in sts_list.items if "oxia" in s.metadata.name]
 

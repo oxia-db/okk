@@ -2,7 +2,7 @@ apiVersion: core.oxia.io/v1
 kind: TestCase
 metadata:
   name: tc-metadata-ephemeral-jvm-0
-  namespace: okk-system
+  namespace: okk
 spec:
   type: metadataWithEphemeral
   duration: "24h"
@@ -13,4 +13,4 @@ spec:
     image: oxia/okk-jvm-worker:main
     targetCluster:
       name: okk
-      namespace: okk-system
+      namespace: okk

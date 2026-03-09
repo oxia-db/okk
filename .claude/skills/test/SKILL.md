@@ -15,7 +15,7 @@ Create, list, or delete testcases via the coordinator HTTP API.
 
 ## Coordinator API
 
-Port-forward first: `kubectl port-forward svc/okk-coordinator 18080:8080 -n okk-system --context kind-okk-test &`
+Port-forward first: `kubectl port-forward svc/okk-coordinator 18080:8080 -n okk --context kind-okk-test &`
 
 ### Create
 ```bash

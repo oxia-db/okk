@@ -24,7 +24,7 @@ helm repo update
 2. Install the charts
 
 ```
-helm install okk-stack okk/okk-stack --namespace okk-system --create-namespace
+helm install okk-stack okk/okk-stack --namespace okk --create-namespace
 ```
 
 3. Run `TestCase` by examples

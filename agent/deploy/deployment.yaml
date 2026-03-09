@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: okk-system
+  name: okk
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: okk-agent
-  namespace: okk-system
+  namespace: okk
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -42,13 +42,13 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: okk-agent
-    namespace: okk-system
+    namespace: okk
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: okk-agent-secrets
-  namespace: okk-system
+  namespace: okk
 type: Opaque
 stringData:
   ANTHROPIC_API_KEY: "replace-me"
@@ -59,7 +59,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: okk-agent
-  namespace: okk-system
+  namespace: okk
   labels:
     app: okk-agent
 spec:
@@ -84,7 +84,7 @@ spec:
                 name: okk-agent-secrets
           env:
             - name: OKK_NAMESPACE
-              value: "okk-system"
+              value: "okk"
             - name: IN_CLUSTER
               value: "true"
             - name: PROMETHEUS_URL
@@ -117,7 +117,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: okk-agent
-  namespace: okk-system
+  namespace: okk
 spec:
   selector:
     app: okk-agent

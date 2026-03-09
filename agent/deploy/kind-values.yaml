@@ -1,5 +1,5 @@
 global:
-  namespace: okk-system
+  namespace: okk
 
 okk-manager:
   image: "mattison/okk-manager"

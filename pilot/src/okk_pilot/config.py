@@ -6,20 +6,6 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
-    # AI provider: "anthropic", "copilot", or "ollama"
-    ai_provider: str = "copilot"
-
-    # Anthropic (when ai_provider == "anthropic")
-    anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-4-20250514"
-
-    # GitHub Copilot / GitHub Models (when ai_provider == "copilot")
-    copilot_model: str = "gpt-4o-mini"
-
-    # Ollama (when ai_provider == "ollama")
-    ollama_url: str = "http://host.docker.internal:11434"
-    ollama_model: str = "qwen2.5:7b"
-
     # GitHub
     github_token: str = ""
     github_repo: str = "oxia-db/okk"
@@ -48,32 +34,24 @@ class Config:
     okk_op_rate: int = 100
     okk_key_space: int = 10000
 
-    # Local triage model (Ollama)
-    triage_enabled: bool = True
-    triage_url: str = "http://host.docker.internal:11434"  # Ollama from inside K8s
-    triage_model: str = "qwen2.5:7b"
-
     # Coordinator
     coordinator_url: str = "http://okk-coordinator:8080"
 
-    # Agent state
-    state_configmap: str = "okk-agent-state"
+    # Pilot state
+    state_configmap: str = "okk-pilot-state"
 
-    @property
-    def has_ai(self) -> bool:
-        if self.ai_provider == "anthropic":
-            return bool(self.anthropic_api_key)
-        if self.ai_provider == "ollama":
-            return True  # Ollama is local, no key needed
-        return bool(self.github_token)  # copilot uses github token
+    # Chaos defaults
+    chaos_duration: str = "30s"
+    chaos_target: str = "app.kubernetes.io/name=oxia-cluster,app.kubernetes.io/component=server"
+
+    # AI analysis (optional — pilot works without it)
+    ai_enabled: bool = False
+    ai_url: str = "http://host.docker.internal:11434"
+    ai_model: str = "qwen2.5:14b"
 
     @classmethod
     def from_env(cls) -> Config:
         return cls(
-            ai_provider=os.environ.get("AI_PROVIDER", cls.ai_provider),
-            anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
-            anthropic_model=os.environ.get("ANTHROPIC_MODEL", cls.anthropic_model),
-            copilot_model=os.environ.get("COPILOT_MODEL", cls.copilot_model),
             github_token=os.environ.get("GITHUB_TOKEN", ""),
             github_repo=os.environ.get("GITHUB_REPO", cls.github_repo),
             namespace=os.environ.get("OKK_NAMESPACE", cls.namespace),
@@ -83,11 +61,12 @@ class Config:
             webhook_port=int(os.environ.get("WEBHOOK_PORT", cls.webhook_port)),
             daily_report_hour=int(os.environ.get("DAILY_REPORT_HOUR", cls.daily_report_hour)),
             oxia_image=os.environ.get("OXIA_IMAGE", cls.oxia_image),
+            oxia_replicas=int(os.environ.get("OXIA_REPLICAS", cls.oxia_replicas)),
             okk_worker_image=os.environ.get("OKK_WORKER_IMAGE", cls.okk_worker_image),
-            ollama_url=os.environ.get("OLLAMA_URL", cls.ollama_url),
-            ollama_model=os.environ.get("OLLAMA_MODEL", cls.ollama_model),
-            triage_enabled=os.environ.get("TRIAGE_ENABLED", "true").lower() == "true",
             coordinator_url=os.environ.get("COORDINATOR_URL", cls.coordinator_url),
-            triage_url=os.environ.get("TRIAGE_URL", cls.triage_url),
-            triage_model=os.environ.get("TRIAGE_MODEL", cls.triage_model),
+            chaos_duration=os.environ.get("CHAOS_DURATION", cls.chaos_duration),
+            chaos_target=os.environ.get("CHAOS_TARGET", cls.chaos_target),
+            ai_enabled=os.environ.get("AI_ENABLED", "false").lower() == "true",
+            ai_url=os.environ.get("AI_URL", cls.ai_url),
+            ai_model=os.environ.get("AI_MODEL", cls.ai_model),
         )

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 from kubernetes import client as k8s_client
 
-from okk_agent.config import Config
+from okk_pilot.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,6 @@ class ObserveTools:
             return json.dumps({"error": f"Failed to get pods: {e.reason}"})
 
     def get_chaos_status(self, namespace: str = "okk") -> str:
-        # Note: This still uses k8s_custom for Chaos Mesh CRDs
         from kubernetes import client as k8s_client
         k8s_custom = k8s_client.CustomObjectsApi()
 
