@@ -12,7 +12,7 @@ import (
 	"github.com/bits-and-blooms/bitset"
 	"github.com/google/uuid"
 	"github.com/oxia-io/okk/coordinator/internal/config"
-	"github.com/oxia-io/okk/internal/proto"
+	"github.com/oxia-io/okk/coordinator/internal/proto"
 	"golang.org/x/time/rate"
 )
 

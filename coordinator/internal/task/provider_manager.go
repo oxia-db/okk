@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/oxia-io/okk/internal/proto"
+	"github.com/oxia-io/okk/coordinator/internal/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
