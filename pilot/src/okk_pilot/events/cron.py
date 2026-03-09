@@ -50,3 +50,7 @@ class CronScheduler:
     def add_interval_job(self, job_id: str, func, **kwargs):
         self._scheduler.add_job(func, trigger="interval", id=job_id, **kwargs)
         logger.info("Added interval job: %s (%s)", job_id, kwargs)
+
+    def add_daily_job(self, job_id: str, func, hour: int = 0, minute: int = 0):
+        self._scheduler.add_job(func, trigger="cron", hour=hour, minute=minute, id=job_id)
+        logger.info("Added daily job: %s at %02d:%02d UTC", job_id, hour, minute)

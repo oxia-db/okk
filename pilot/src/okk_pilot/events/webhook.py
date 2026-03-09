@@ -9,12 +9,17 @@ from typing import Callable
 from fastapi import FastAPI, Request, HTTPException
 
 from okk_pilot.pilot import Event
+from okk_pilot.pipeline import PipelineConfig
 
 logger = logging.getLogger(__name__)
 
 
-def create_webhook_app(on_event: Callable[[Event], None], webhook_secret: str | None = None) -> FastAPI:
-    app = FastAPI(title="okk-pilot webhook")
+def create_webhook_app(
+    on_event: Callable[[Event], None],
+    webhook_secret: str | None = None,
+    pipeline: PipelineConfig | None = None,
+) -> FastAPI:
+    app = FastAPI(title="okk-pilot")
 
     @app.post("/webhook/github")
     async def github_webhook(request: Request):
@@ -70,18 +75,27 @@ def create_webhook_app(on_event: Callable[[Event], None], webhook_secret: str | 
     async def health():
         return {"status": "healthy"}
 
+    @app.get("/pipeline")
+    async def get_pipeline():
+        if not pipeline:
+            return {"error": "no pipeline loaded"}
+        return pipeline.to_display()
+
+    @app.get("/pipeline/detail")
+    async def get_pipeline_detail():
+        if not pipeline:
+            return {"error": "no pipeline loaded"}
+        return pipeline.to_dict()
+
     @app.post("/trigger/{event_type}")
     async def trigger_event(event_type: str):
-        summaries = {
-            "health_check": "Manual health check",
-            "periodic_summary": "Manual periodic summary",
-            "daily_report": "Manual daily report",
-            "chaos_round": "Manual chaos round",
-            "scale_event": "Manual scale test",
+        valid = {
+            "check_invariants", "inject_chaos", "test_scaling",
+            "post_report", "daily_report",
         }
-        if event_type not in summaries:
-            return {"error": f"Unknown event type: {event_type}. Available: {', '.join(summaries)}"}
-        on_event(Event(type=event_type, summary=summaries[event_type], details={}))
+        if event_type not in valid:
+            return {"error": f"Unknown event type: {event_type}. Available: {', '.join(sorted(valid))}"}
+        on_event(Event(type=event_type, summary=f"Manual {event_type}", details={}))
         return {"status": "triggered", "type": event_type}
 
     return app

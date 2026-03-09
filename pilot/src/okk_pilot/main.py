@@ -5,13 +5,16 @@ import os
 import signal
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import uvicorn
 from kubernetes import client as k8s_client, config as k8s_config
 
 from okk_pilot.pilot import Pilot, Event
 from okk_pilot.config import Config
+from okk_pilot.pipeline import load_pipeline
 from okk_pilot.events.cron import CronScheduler
 from okk_pilot.events.github_poller import GitHubPoller
 from okk_pilot.events.k8s import K8sWatcher
@@ -28,6 +31,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("okk-pilot")
 
+PIPELINE_PATH = Path(__file__).parent.parent.parent / "pipeline.yaml"
+
 
 class OkkPilot:
     """Main application that wires event sources to the pilot."""
@@ -35,6 +40,13 @@ class OkkPilot:
     def __init__(self, config: Config):
         self.config = config
         self._shutdown = threading.Event()
+
+        # Load pipeline
+        pipeline_path = os.environ.get("OKK_PIPELINE_PATH", str(PIPELINE_PATH))
+        self.pipeline = load_pipeline(pipeline_path)
+        logger.info("Pipeline loaded: %d actions, %d chaos types, %d invariants",
+                     len(self.pipeline.actions), len(self.pipeline.chaos_types),
+                     len(self.pipeline.invariants))
 
         # Init Kubernetes clients
         if config.in_cluster:
@@ -52,8 +64,8 @@ class OkkPilot:
         state = StateTools(config, k8s_core)
         invariants = InvariantChecker(config, k8s_core)
 
-        # Init the pilot (always works — no AI credentials needed)
-        self.pilot = Pilot(config, observe, act, report, state, invariants)
+        # Init the pilot
+        self.pilot = Pilot(config, observe, act, report, state, invariants, self.pipeline)
 
         # Event processing
         self._executor = ThreadPoolExecutor(max_workers=4)
@@ -69,6 +81,7 @@ class OkkPilot:
         self.webhook_app = create_webhook_app(
             self._on_event,
             webhook_secret=os.environ.get("GITHUB_WEBHOOK_SECRET"),
+            pipeline=self.pipeline,
         )
 
     def _on_event(self, event: Event):
@@ -83,27 +96,45 @@ class OkkPilot:
             except Exception:
                 logger.exception("Failed to handle event: %s", event.type)
 
+    def _run_continuous_chaos(self):
+        """Run chaos in a continuous loop: inject one, wait, repeat."""
+        logger.info("Starting continuous chaos loop")
+        while not self._shutdown.is_set():
+            event = Event(type="inject_chaos", summary="Continuous chaos injection", details={})
+            self._handle_event(event)
+            # Wait between chaos rounds (chaos duration + recovery buffer)
+            self._shutdown.wait(timeout=120)
+
     def run(self):
         logger.info("Starting okk-pilot")
 
         self.k8s_watcher.start()
         self.cron.start()
 
-        # Periodic health check (every 5 minutes)
-        self.cron.add_interval_job("health_check", self.cron._trigger_health_check, minutes=5)
-
-        # Periodic summary (every 4 hours)
-        self.cron.add_interval_job("periodic_summary", self.cron._trigger_periodic_summary, hours=4)
-
-        # Chaos round (every 2 hours)
-        self.cron.add_interval_job("chaos_round", self.cron._trigger_chaos_round, hours=2)
-
-        # Scale event (every 6 hours)
-        self.cron.add_interval_job("scale_event", self.cron._trigger_scale_event, hours=6)
+        # Schedule actions from pipeline
+        for action in self.pipeline.actions:
+            if action.schedule == "always":
+                # Run in a dedicated background thread
+                t = threading.Thread(target=self._run_continuous_chaos, daemon=True)
+                t.start()
+                logger.info("Started continuous: %s", action.action)
+            elif action.interval_seconds:
+                trigger_fn = self._make_trigger(action.action)
+                self.cron.add_interval_job(
+                    action.action, trigger_fn,
+                    seconds=action.interval_seconds,
+                )
+                logger.info("Scheduled %s: every %ds", action.action, action.interval_seconds)
+            elif action.cron_hour is not None:
+                # Daily actions are handled by the cron scheduler
+                self.cron.add_daily_job(action.action,
+                                        self._make_trigger(action.action),
+                                        hour=action.cron_hour)
+                logger.info("Scheduled %s: daily at %02d:00", action.action, action.cron_hour)
 
         # GitHub comment polling (every 2 minutes)
         if self.github_poller:
-            self.cron.add_interval_job("github_poll", self.github_poller.poll, minutes=2)
+            self.cron.add_interval_job("github_poll", self.github_poller.poll, seconds=120)
 
         # Fire startup event
         self._on_event(Event(
@@ -123,6 +154,16 @@ class OkkPilot:
             port=self.config.webhook_port,
             log_level="info",
         )
+
+    def _make_trigger(self, action: str):
+        """Create a trigger function for a given action name."""
+        def trigger():
+            self._on_event(Event(
+                type=action,
+                summary=f"Scheduled {action}",
+                details={},
+            ))
+        return trigger
 
     def shutdown(self):
         logger.info("Shutting down okk-pilot")

@@ -10,6 +10,7 @@ from typing import Any
 from kubernetes import client as k8s_client
 
 from okk_pilot.config import Config
+from okk_pilot.pipeline import PipelineConfig
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +40,16 @@ class InvariantChecker:
         self._prometheus_url = config.prometheus_url
         self._namespace = config.namespace
 
-    def check_invariants(self, p99_threshold_ms: float = 500.0) -> str:
+    def check_invariants(self, pipeline: PipelineConfig | None = None) -> str:
+        p99_threshold_ms = 500.0
+        max_restarts = 10
+        if pipeline:
+            p99_threshold_ms = pipeline.get_threshold("p99_ms") or p99_threshold_ms
+            max_restarts = pipeline.get_threshold("restarts") or max_restarts
+
         checks: list[CheckResult] = []
         checks.extend(self._check_safety())
-        checks.extend(self._check_liveness())
+        checks.extend(self._check_liveness(max_restarts))
         checks.extend(self._check_performance(p99_threshold_ms))
 
         tier_results = {}
@@ -122,7 +129,7 @@ class InvariantChecker:
 
     # ── Liveness ────────────────────────────────────────────
 
-    def _check_liveness(self) -> list[CheckResult]:
+    def _check_liveness(self, max_restarts: int = 10) -> list[CheckResult]:
         results: list[CheckResult] = []
 
         pod_groups = [
@@ -167,9 +174,9 @@ class InvariantChecker:
                 results.append(CheckResult(
                     name=f"liveness.restarts.{group_name}",
                     tier="liveness",
-                    passed=total_restarts <= 10,
+                    passed=total_restarts <= max_restarts,
                     message=f"{group_name}: {total_restarts} restarts" + (
-                        " (excessive)" if total_restarts > 10 else ""
+                        f" (exceeds {max_restarts})" if total_restarts > max_restarts else ""
                     ),
                     value=total_restarts,
                 ))

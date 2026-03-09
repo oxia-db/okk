@@ -154,3 +154,16 @@ class ObserveTools:
             except Exception:
                 pass
         return json.dumps(all_chaos, indent=2)
+
+    def get_oxia_status(self) -> dict:
+        """Read the oxia-status configmap to get shard assignments."""
+        try:
+            cm = self.k8s_core.read_namespaced_config_map(
+                "oxia-status", self.config.namespace,
+            )
+            import yaml
+            raw = cm.data.get("status", "")
+            return yaml.safe_load(raw) if raw else {}
+        except Exception as e:
+            logger.warning("Failed to read oxia-status configmap: %s", e)
+            return {}

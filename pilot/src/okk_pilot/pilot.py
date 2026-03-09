@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 import time
 from dataclasses import dataclass
 
 from okk_pilot.config import Config
+from okk_pilot.pipeline import PipelineConfig, default_pipeline
 from okk_pilot.tools.observe import ObserveTools
 from okk_pilot.tools.act import ActTools
 from okk_pilot.tools.report import ReportTools
@@ -13,8 +15,6 @@ from okk_pilot.tools.state import StateTools
 from okk_pilot.tools.invariants import InvariantChecker
 
 logger = logging.getLogger(__name__)
-
-CHAOS_TYPES = ["pod-kill", "network-delay", "pod-failure", "cpu-stress", "clock-skew"]
 
 
 @dataclass
@@ -32,6 +32,7 @@ class Pilot:
         observe: ObserveTools, act: ActTools,
         report: ReportTools | None, state: StateTools,
         invariants: InvariantChecker,
+        pipeline: PipelineConfig | None = None,
     ):
         self.config = config
         self.observe = observe
@@ -39,6 +40,7 @@ class Pilot:
         self.report = report
         self.state = state
         self.invariants = invariants
+        self.pipeline = pipeline or default_pipeline()
 
         # Optional AI for log analysis
         self._ai = None
@@ -59,10 +61,11 @@ class Pilot:
         self._recent_events: dict[str, float] = {}
         self._event_cooldown = 300
 
-        logger.info("Pilot initialized")
+        logger.info("Pilot initialized with pipeline: %s",
+                     [a.raw for a in self.pipeline.actions])
 
     def handle(self, event: Event) -> str:
-        """Route event to deterministic handler."""
+        """Route event to handler."""
         logger.info("Handling event: %s — %s", event.type, event.summary)
 
         if self._is_duplicate(event):
@@ -70,10 +73,10 @@ class Pilot:
 
         handler = {
             "startup": self._handle_startup,
-            "health_check": self._handle_health_check,
-            "periodic_summary": self._handle_periodic_summary,
-            "chaos_round": self._handle_chaos_round,
-            "scale_event": self._handle_scale_event,
+            "check_invariants": self._handle_check_invariants,
+            "inject_chaos": self._handle_inject_chaos,
+            "test_scaling": self._handle_test_scaling,
+            "post_report": self._handle_post_report,
             "daily_report": self._handle_daily_report,
             "github_comment": self._handle_github_comment,
             "pod_restart": self._handle_pod_event,
@@ -92,8 +95,11 @@ class Pilot:
         return ""
 
     def _is_duplicate(self, event: Event) -> bool:
-        if event.type in ("github_comment", "daily_report", "startup",
-                          "health_check", "periodic_summary", "chaos_round", "scale_event"):
+        non_dedup = (
+            "github_comment", "daily_report", "startup",
+            "check_invariants", "post_report", "inject_chaos", "test_scaling",
+        )
+        if event.type in non_dedup:
             return False
         key = f"{event.type}:{event.summary[:80]}"
         now = time.time()
@@ -104,7 +110,7 @@ class Pilot:
         self._recent_events[key] = now
         return False
 
-    # ── Handlers ─────────────────────────────────────────────
+    # ── Action Handlers ──────────────────────────────────────
 
     def _handle_startup(self, event: Event) -> str:
         snapshot = self._gather_snapshot()
@@ -113,30 +119,26 @@ class Pilot:
         self._post_stats("startup", verdict, snapshot)
         return verdict
 
-    def _handle_health_check(self, event: Event) -> str:
+    def _handle_check_invariants(self, event: Event) -> str:
         snapshot = self._gather_snapshot()
         inv = self._parse_invariants(snapshot)
 
         if inv.get("passed", True):
-            logger.info("Health check: all invariants hold.")
+            logger.info("Invariants: all hold.")
             return "healthy"
 
-        # Invariant violation — investigate with AI if available
         verdict = inv.get("summary", "Invariant violation detected.")
         analysis = self._analyze_logs_if_needed(verdict)
         if analysis:
             verdict += f"\n{analysis}"
 
-        self._post_stats("health_check", verdict, snapshot)
+        self._post_stats("check_invariants", verdict, snapshot)
         return verdict
 
-    def _handle_periodic_summary(self, event: Event) -> str:
-        snapshot = self._gather_snapshot()
-        verdict = self._verdict_from_snapshot(snapshot)
-        self._post_stats("periodic_summary", verdict, snapshot)
-        return verdict
+    def _handle_inject_chaos(self, event: Event) -> str:
+        """Inject one chaos type, wait for it to finish, then return.
+        The scheduler calls this in a loop to cycle through all types."""
 
-    def _handle_chaos_round(self, event: Event) -> str:
         # Pre-check: cluster must be healthy
         snapshot = self._gather_snapshot()
         inv = self._parse_invariants(snapshot)
@@ -147,10 +149,12 @@ class Pilot:
         # Clean up any stuck chaos
         self._cleanup_chaos()
 
-        # Pick next chaos type (round-robin via state)
-        index = self._get_chaos_index()
-        chaos_type = CHAOS_TYPES[index % len(CHAOS_TYPES)]
-        self._set_chaos_index(index + 1)
+        # Pick a random chaos type
+        chaos_types = self.pipeline.chaos_types
+        if not chaos_types:
+            return "skipped: no chaos types configured"
+
+        chaos_type = random.choice(chaos_types)
 
         # Inject
         logger.info("Injecting chaos: %s", chaos_type)
@@ -172,18 +176,20 @@ class Pilot:
         post_snapshot = self._gather_snapshot()
         post_inv = self._parse_invariants(post_snapshot)
         if post_inv.get("passed", True):
-            verdict = f"Injected {chaos_type} ({self.config.chaos_duration}). Cluster recovered. All invariants hold."
+            verdict = f"Injected {chaos_type} ({self.config.chaos_duration}). Cluster recovered."
         else:
             verdict = f"Injected {chaos_type} ({self.config.chaos_duration}). RECOVERY ISSUE: {post_inv.get('summary', '')}"
-            # Use AI to analyze if available
             analysis = self._analyze_logs_if_needed(verdict)
             if analysis:
                 verdict += f"\n{analysis}"
 
-        self._post_stats("chaos_round", verdict, post_snapshot)
+        self._post_stats("inject_chaos", verdict, post_snapshot)
         return verdict
 
-    def _handle_scale_event(self, event: Event) -> str:
+    def _handle_test_scaling(self, event: Event) -> str:
+        """Scale test: can expand by any amount, but must reduce one at a time.
+        Before each scale-down step, verify the oxia-status configmap shows
+        the node has drained (no pending shard deletions)."""
         # Pre-check
         snapshot = self._gather_snapshot()
         inv = self._parse_invariants(snapshot)
@@ -198,35 +204,91 @@ class Pilot:
             return "skipped: active chaos"
 
         original = self.config.oxia_replicas
-        target = max(1, original - 1)
+        scale_up_target = original + random.randint(1, 3)
+        steps = []
+        issues = []
 
-        # Scale down
-        logger.info("Scaling %d → %d", original, target)
-        self.act.scale_oxia(replicas=target, namespace=self.config.namespace)
+        # Phase 1: Scale up (can jump by any amount)
+        logger.info("Scaling up %d → %d", original, scale_up_target)
+        self.act.scale_oxia(replicas=scale_up_target, namespace=self.config.namespace)
         time.sleep(30)
 
-        mid_snapshot = self._gather_snapshot()
-        mid_inv = self._parse_invariants(mid_snapshot)
+        up_snapshot = self._gather_snapshot()
+        up_inv = self._parse_invariants(up_snapshot)
+        steps.append(f"{original}→{scale_up_target}")
+        if not up_inv.get("passed", True):
+            issues.append(f"After scale-up to {scale_up_target}: {up_inv.get('summary', '')}")
 
-        # Scale back up
-        logger.info("Scaling %d → %d", target, original)
-        self.act.scale_oxia(replicas=original, namespace=self.config.namespace)
-        time.sleep(30)
+        # Phase 2: Scale down one at a time back to original
+        current = scale_up_target
+        while current > original:
+            removed_replica = current  # the node being removed (0-indexed)
+            current -= 1
+            logger.info("Scaling down %d → %d (removing oxia-%d)", current + 1, current, removed_replica)
+            self.act.scale_oxia(replicas=current, namespace=self.config.namespace)
+
+            # Wait for shard drain — check oxia-status configmap
+            if not self._wait_for_shard_drain(removed_replica, timeout=120):
+                issues.append(f"Shard drain timeout for oxia-{removed_replica} at {current} replicas")
+
+            time.sleep(30)
+
+            down_snapshot = self._gather_snapshot()
+            down_inv = self._parse_invariants(down_snapshot)
+            steps.append(f"→{current}")
+            if not down_inv.get("passed", True):
+                issues.append(f"After scale-down to {current}: {down_inv.get('summary', '')}")
 
         post_snapshot = self._gather_snapshot()
-        post_inv = self._parse_invariants(post_snapshot)
+        path = "".join(steps)
 
-        if mid_inv.get("passed", True) and post_inv.get("passed", True):
-            verdict = f"Scaled {original}→{target}→{original}. All invariants held throughout."
+        if not issues:
+            verdict = f"Scaled {path}. All invariants held throughout."
         else:
-            issues = []
-            if not mid_inv.get("passed", True):
-                issues.append(f"During scale-down: {mid_inv.get('summary', '')}")
-            if not post_inv.get("passed", True):
-                issues.append(f"After scale-up: {post_inv.get('summary', '')}")
-            verdict = f"Scaled {original}→{target}→{original}. ISSUES: {'; '.join(issues)}"
+            verdict = f"Scaled {path}. ISSUES: {'; '.join(issues)}"
 
-        self._post_stats("scale_event", verdict, post_snapshot)
+        self._post_stats("test_scaling", verdict, post_snapshot)
+        return verdict
+
+    def _wait_for_shard_drain(self, removed_replica: int, timeout: int = 120) -> bool:
+        """Wait until oxia-status configmap shows no pendingDeleteShardNodes.
+        Logs progress so the user knows what's happening."""
+        node_name = f"oxia-{removed_replica}"
+        logger.info("Waiting for shard drain from %s...", node_name)
+        start = time.time()
+        last_pending = None
+
+        while time.time() - start < timeout:
+            try:
+                status = self.observe.get_oxia_status()
+                pending = self._get_pending_shard_ops(status)
+                if not pending:
+                    elapsed = time.time() - start
+                    logger.info("Shard drain complete for %s (took %.0fs)", node_name, elapsed)
+                    return True
+                if pending != last_pending:
+                    logger.info("Shard drain in progress — pending: %s", pending)
+                    last_pending = pending
+            except Exception as e:
+                logger.debug("Failed to check shard status: %s", e)
+            time.sleep(5)
+
+        logger.warning("Shard drain timed out for %s after %ds", node_name, timeout)
+        return False
+
+    def _get_pending_shard_ops(self, status: dict) -> list[str]:
+        """Get list of pending shard operations from oxia-status."""
+        pending = []
+        for ns_name, ns_data in status.get("namespaces", {}).items():
+            for shard_id, shard_data in ns_data.get("shards", {}).items():
+                for node in shard_data.get("pendingDeleteShardNodes", []):
+                    pending.append(f"shard-{shard_id}@{node.get('internal', '?')}")
+        return pending
+
+    def _handle_post_report(self, event: Event) -> str:
+        snapshot = self._gather_snapshot()
+        verdict = self._verdict_from_snapshot(snapshot)
+        self._post_stats("post_report", verdict, snapshot)
         return verdict
 
     def _handle_daily_report(self, event: Event) -> str:
@@ -234,7 +296,6 @@ class Pilot:
         verdict = self._verdict_from_snapshot(snapshot)
         self._post_stats("daily_report", f"End of day. {verdict}", snapshot)
 
-        # Close the daily issue
         if self.report:
             try:
                 daily = json.loads(self.report.get_or_create_daily_issue())
@@ -247,7 +308,6 @@ class Pilot:
     def _handle_github_comment(self, event: Event) -> str:
         body = event.details.get("comment_body", "").lower()
         issue_number = event.details.get("issue_number")
-        commenter = event.details.get("commenter", "")
 
         # Parse command after @okk-pilot
         cmd = ""
@@ -261,7 +321,7 @@ class Pilot:
             header, tc_lines = self._format_stats_line("status", snapshot)
             reply = header + "\n" + "\n".join(tc_lines)
         elif cmd == "chaos":
-            reply = self._handle_chaos_round(event)
+            reply = self._handle_inject_chaos(event)
         elif cmd == "stop":
             tc_data = self.observe.list_testcases()
             try:
@@ -292,13 +352,10 @@ class Pilot:
         restart_count = event.details.get("restart_count", 0)
         reason = event.details.get("reason", "")
 
-        # Only report if significant
         if restart_count < 3 and reason not in ("OOMKilled",):
             return ""
 
         msg = f"Pod {event.details.get('pod', '?')} restarted (reason: {reason}, count: {restart_count})"
-
-        # Use AI to analyze logs if available
         analysis = self._analyze_logs_if_needed(msg, pod=event.details.get("pod"))
         if analysis:
             msg += f"\n{analysis}"
@@ -309,7 +366,6 @@ class Pilot:
 
     def _handle_k8s_warning(self, event: Event) -> str:
         reason = event.details.get("reason", "")
-        # Skip known transient warnings
         transient = (
             "FailedScheduling", "ImagePullBackOff", "Pulling", "Pulled",
             "FailedToUpdateEndpointSlices", "FailedToUpdateEndpoint",
@@ -337,7 +393,7 @@ class Pilot:
         except Exception:
             pass
         try:
-            snapshot["invariants"] = self.invariants.check_invariants()
+            snapshot["invariants"] = self.invariants.check_invariants(self.pipeline)
         except Exception:
             pass
         return snapshot
@@ -400,17 +456,57 @@ class Pilot:
         if not self.report:
             return
         try:
-            header, tc_lines = self._format_stats_line(event_type, snapshot)
-            body = header + "\n"
-            if tc_lines:
-                body += "\n".join(tc_lines) + "\n"
-            if verdict:
-                body += verdict
+            body = self._format_report(event_type, verdict, snapshot)
             daily = json.loads(self.report.get_or_create_daily_issue())
             if "number" in daily:
                 self.report.comment_on_issue(issue_number=daily["number"], body=body)
         except Exception as e:
             logger.warning("Failed to post stats: %s", e)
+
+    def _format_report(self, event_type: str, verdict: str, snapshot: dict) -> str:
+        """Format a detailed report comment."""
+        lines = [f"### 🤖 {event_type}", ""]
+
+        # Testcase table
+        tc_raw = snapshot.get("testcases", "")
+        if tc_raw:
+            try:
+                tc_data = json.loads(tc_raw) if isinstance(tc_raw, str) else tc_raw
+                testcases = tc_data.get("testcases", []) if isinstance(tc_data, dict) else []
+                if testcases:
+                    lines.append("| Testcase | State | Operations | Passed | Failed |")
+                    lines.append("|---|---|---|---|---|")
+                    for tc in testcases:
+                        name = tc.get("name", "?")
+                        state = tc.get("state", "?")
+                        ops = tc.get("operations", 0)
+                        passed = tc.get("assertions_passed", 0)
+                        failed = tc.get("assertions_failed", 0)
+                        lines.append(f"| {name} | {state} | {ops:,} | {passed:,} | {failed} |")
+                    lines.append("")
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        # Invariant results
+        inv_raw = snapshot.get("invariants", "")
+        if inv_raw:
+            try:
+                inv_data = json.loads(inv_raw) if isinstance(inv_raw, str) else inv_raw
+                checks = inv_data.get("checks", [])
+                if checks:
+                    lines.append("**Invariants:**")
+                    for check in checks:
+                        icon = "✅" if check.get("passed") else "❌"
+                        lines.append(f"- {icon} {check.get('message', check.get('name', '?'))}")
+                    lines.append("")
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        # Verdict
+        if verdict:
+            lines.append(f"**Verdict:** {verdict}")
+
+        return "\n".join(lines)
 
     def _ensure_testcases_running(self):
         try:
@@ -471,12 +567,10 @@ class Pilot:
     # ── AI Analysis (optional) ────────────────────────────────
 
     def _analyze_logs_if_needed(self, context: str, pod: str | None = None) -> str:
-        """Use AI to analyze logs when available. Returns analysis or empty string."""
         if not self._ai:
             return ""
 
         try:
-            # Gather recent logs
             logs = ""
             if pod:
                 logs = self.observe.get_pod_logs(pod_name=pod, since_minutes=5)
@@ -489,7 +583,6 @@ class Pilot:
             if not logs or len(logs) < 20:
                 return ""
 
-            # Only send if there are error indicators
             if not any(kw in logs.lower() for kw in ["error", "panic", "fatal", "oom", "timeout"]):
                 return ""
 
