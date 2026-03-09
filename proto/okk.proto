@@ -97,6 +97,7 @@ message Assertion {
 message ExecuteCommand {
   string testcase = 1;
   Operation operation = 2;
+  string namespace = 3;
 }
 
 enum Status {
