@@ -127,7 +127,7 @@ func applyWorkerDeployment(ctx context.Context, client client.Client, testcase c
 							Name:            "coordinator",
 							Resources:       worker.Resource,
 							Image:           worker.Image,
-							ImagePullPolicy: corev1.PullAlways,
+							ImagePullPolicy: corev1.PullIfNotPresent,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "OKK_WORKER_ENGINE_NAME",
