@@ -47,10 +47,6 @@ func (m *Manager) CreateTask(tc *config.TestCaseConfig) error {
 		return fmt.Errorf("unknown testcase type: %s", tc.Type)
 	}
 
-	newTask := NewTask(m.ctx, m.providerManager, tc.Name, tc.Namespace, gen, tc.WorkerEndpoint)
-	m.tasks[tc.Name] = newTask
-	m.configs[tc.Name] = tc
-
 	now := time.Now()
 	m.statuses[tc.Name] = &TaskStatus{
 		Name:           tc.Name,
@@ -60,6 +56,10 @@ func (m *Manager) CreateTask(tc *config.TestCaseConfig) error {
 		State:          "running",
 		RunningSince:   &now,
 	}
+
+	newTask := NewTask(m.ctx, m.providerManager, tc.Name, tc.Namespace, gen, tc.WorkerEndpoint, m.statuses[tc.Name])
+	m.tasks[tc.Name] = newTask
+	m.configs[tc.Name] = tc
 
 	newTask.Run()
 	slog.Info("Task created and started", "name", tc.Name, "type", tc.Type, "worker", tc.WorkerEndpoint)

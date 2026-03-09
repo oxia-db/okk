@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -49,6 +50,11 @@ type task struct {
 	name            string
 	namespace       string
 	worker          string
+	status          *TaskStatus
+
+	operations       atomic.Int64
+	assertionsPassed atomic.Int64
+	assertionsFailed atomic.Int64
 }
 
 func (t *task) Close() error {
@@ -118,6 +124,11 @@ func (t *task) run() error {
 				case proto.Status_Ok:
 					bo.Reset()
 					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_Ok.String()).Observe(time.Since(startTime).Seconds())
+					t.operations.Add(1)
+					if operation.Assertion != nil {
+						t.assertionsPassed.Add(1)
+					}
+					t.syncStatus()
 					return nil
 				case proto.Status_RetryableFailure:
 					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_RetryableFailure.String()).Observe(time.Since(startTime).Seconds())
@@ -134,6 +145,10 @@ func (t *task) run() error {
 						return osserrors.Wrap(ErrRetryable, response.StatusInfo)
 					}
 					operationLatencyHistogram.WithLabelValues(t.name, proto.Status_AssertionFailure.String()).Observe(time.Since(startTime).Seconds())
+					t.assertionsFailed.Add(1)
+					failureMsg := response.StatusInfo
+					t.status.LastFailure = &failureMsg
+					t.syncStatus()
 					return backoff.Permanent(osserrors.Wrap(ErrAssertionFailure, response.StatusInfo))
 				default:
 					operationLatencyHistogram.WithLabelValues(t.name, "Unknown").Observe(time.Since(startTime).Seconds())
@@ -152,8 +167,14 @@ func (t *task) run() error {
 	}
 }
 
+func (t *task) syncStatus() {
+	t.status.Operations = t.operations.Load()
+	t.status.AssertionsPassed = t.assertionsPassed.Load()
+	t.status.AssertionsFailed = t.assertionsFailed.Load()
+}
+
 func NewTask(ctx context.Context, providerManager *ProviderManager,
-	name string, namespace string, gen generator.Generator, worker string) Task {
+	name string, namespace string, gen generator.Generator, worker string, status *TaskStatus) Task {
 	currentContext, contextCancel := context.WithCancel(ctx)
 	logger := slog.With("task", name)
 	t := &task{
@@ -166,6 +187,7 @@ func NewTask(ctx context.Context, providerManager *ProviderManager,
 		namespace:       namespace,
 		worker:          worker,
 		providerManager: providerManager,
+		status:          status,
 	}
 	return t
 }
