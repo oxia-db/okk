@@ -125,7 +125,51 @@ public class OxiaEngine implements Engine {
         if (put.getEphemeral()) {
             optionSet.add(OptionEphemeral.AsEphemeralRecord);
         }
-        final PutResult result = oxiaClient.put(put.getKey(), put.getValue().toByteArray(), optionSet).join();
+        if (put.hasExpectedVersionId()) {
+            long expectedVersion = put.getExpectedVersionId();
+            if (expectedVersion == -1) {
+                optionSet.add(PutOption.IfRecordDoesNotExist);
+            } else {
+                optionSet.add(PutOption.IfVersionIdEquals(expectedVersion));
+            }
+        }
+
+        // Check if this operation expects a version conflict
+        boolean expectConflict = operation.hasAssertion()
+                && operation.getAssertion().hasExpectVersionConflict()
+                && operation.getAssertion().getExpectVersionConflict();
+
+        final PutResult result;
+        try {
+            result = oxiaClient.put(put.getKey(), put.getValue().toByteArray(), optionSet).join();
+        } catch (Exception ex) {
+            Throwable cause = ex;
+            while (cause.getCause() != null) {
+                cause = cause.getCause();
+            }
+            if (expectConflict) {
+                log.info("[Put][{}] Expected version conflict occurred as expected: {}",
+                        operation.getSequence(), cause.getMessage());
+                return ExecuteResponse.newBuilder()
+                        .setStatus(Status.Ok)
+                        .build();
+            }
+            throw ex;
+        }
+
+        if (expectConflict) {
+            log.warn("[Put][{}] Expected version conflict but put succeeded", operation.getSequence());
+            return ExecuteResponse.newBuilder()
+                    .setStatus(Status.AssertionFailure)
+                    .setStatusInfo("expected version conflict but put succeeded")
+                    .build();
+        }
+
+        // Return version_id from successful put
+        var responseBuilder = ExecuteResponse.newBuilder().setStatus(Status.Ok);
+        if (result.version() != null) {
+            responseBuilder.setVersionId(result.version().versionId());
+        }
 
         if (operation.hasAssertion()) {
             final Assertion assertion = operation.getAssertion();
@@ -175,9 +219,7 @@ public class OxiaEngine implements Engine {
             }
         }
 
-        return ExecuteResponse.newBuilder()
-                .setStatus(Status.Ok)
-                .build();
+        return responseBuilder.build();
     }
 
     private ExecuteResponse processScan(Operation operation) {
