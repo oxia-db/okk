@@ -6,6 +6,8 @@ import io.oxia.client.api.GetResult;
 import io.oxia.client.api.Notification;
 import io.oxia.client.api.Notification;
 import io.oxia.client.api.OxiaClientBuilder;
+import io.oxia.client.api.exceptions.KeyAlreadyExistsException;
+import io.oxia.client.api.exceptions.UnexpectedVersionIdException;
 import io.oxia.client.api.PutResult;
 import io.oxia.client.api.options.GetOption;
 import io.oxia.client.api.options.PutOption;
@@ -147,7 +149,9 @@ public class OxiaEngine implements Engine {
             while (cause.getCause() != null) {
                 cause = cause.getCause();
             }
-            if (expectConflict) {
+            boolean isVersionConflict = cause instanceof KeyAlreadyExistsException
+                    || cause instanceof UnexpectedVersionIdException;
+            if (expectConflict && isVersionConflict) {
                 log.info("[Put][{}] Expected version conflict occurred as expected: {}",
                         operation.getSequence(), cause.getMessage());
                 return ExecuteResponse.newBuilder()

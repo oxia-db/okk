@@ -63,10 +63,8 @@ func (c *conditionalPut) OnResponse(resp *proto.ExecuteResponse) {
 			ks.versionId = vid
 			ks.value = c.pendingValue
 		}
-	case 2: // delete
-		delete(c.keys, c.pendingKeyIndex)
-	// 3 (conflictCreate) and 4 (staleUpdate) are expected-failure ops;
-	// the state doesn't change.
+	// case 2 (delete): state already updated eagerly in genDeleteAndRecreate
+	// case 3,4 (conflict ops): state doesn't change
 	}
 }
 
@@ -109,7 +107,7 @@ func (c *conditionalPut) processInitStage() (*proto.Operation, bool) {
 	c.pendingValue = uid
 
 	versionId := int64(-1) // must not exist
-	if idx >= c.keySpace {
+	if c.sequence >= c.keySpace {
 		c.initialized = true
 	}
 	return &proto.Operation{
